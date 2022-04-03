@@ -1,7 +1,7 @@
 #![recursion_limit = "11256"]
 use yew::prelude::*;
 use yew_router::prelude::*;
-use yew_router::components::RouterAnchor;
+use yew::html::Scope;
 
 mod pages;
 use pages::{
@@ -15,25 +15,25 @@ use pages::{
             score::Score,
             howc4::HowToConnect4};
 
-#[derive(Switch, Debug, Clone, PartialEq)]
+#[derive(Clone, Routable, PartialEq)]
 pub enum Route {
-    #[to = "/c4computer"]
+    #[at("/c4computer")]
     Connect4Computer,
-    #[to = "/c4human"]
+    #[at("/c4human")]
     Connect4Human,
-    #[to = "/howc4"]
+    #[at("/howc4")]
     HowToConnect4,
-    #[to = "/howtoot"]
+    #[at("/howtoot")]
     HowToToot,
-    #[to = "/tootcomputer"]
+    #[at("/tootcomputer")]
     TOOTComputer,
-    #[to = "/toothuman"]
+    #[at("/toothuman")]
     TOOTHuman,
-    #[to = "/scoreboard"]
+    #[at("/scoreboard")]
     ScoreBoard,
-    #[to = "/score"]
+    #[at("/score")]
     Score,
-    #[to = "/"]
+    #[at("/")]
     WelcomeModel,
 }
 
@@ -43,102 +43,87 @@ impl Component for App {
     type Message = ();
     type Properties = ();
 
-    fn create(_: Self::Properties, _: ComponentLink<Self>) -> Self {
+    fn create(_ctx: &Context<Self>) -> Self {
         Self
     }
 
-    fn update(&mut self, _: Self::Message) -> bool {
+    fn update(&mut self, _ctx: &Context<Self>, _msg: Self::Message) -> bool {
         unimplemented!()
     }
 
-    fn change(&mut self, _: Self::Properties) -> bool {
+    fn changed(&mut self, _ctx: &Context<Self>) -> bool {
         unimplemented!()
     }
 
-    fn view(&self) -> Html {
-        type Anchor = RouterAnchor<Route>;
+    fn view(&self, ctx: &Context<Self>) -> Html {
 
         html! {
-            <>
-            <h3 class="w3-padding-64"><b>{"Play"}</b><b>{"Connect4 / TOOT-OTTO"}</b></h3>
-            <div>
-                <Anchor route=Route::WelcomeModel>
-                { "Welcome" }
-                </Anchor>
-                <br></br>
-                <br></br>
-                <Anchor route=Route::HowToConnect4>
-                { "How To Play Connect4" }
-                </Anchor>
-                <br></br>
-                <Anchor route=Route::Connect4Computer>
-                { "Play Connect4 With Computer" }
-                </Anchor>
-                <br></br>
-                <Anchor route=Route::Connect4Human>
-                { "Play Connect4 With Another Human" }
-                </Anchor>
-                <br></br>
-                <br></br>
-                <Anchor route=Route::HowToToot>
-                { "How to Play TOOT-OTTO" }
-                </Anchor>
-                <br></br>
-                <Anchor route=Route::TOOTComputer>
-                { "Play Toot-Otto With Computer" }
-                </Anchor>
-                <br></br>
-                <Anchor route=Route::TOOTHuman>
-                { "Play Toot-Otto With Another Human" }
-                </Anchor>
-                <br></br>
-                <br></br>
-                <Anchor route=Route::ScoreBoard>
-                { "View Game History" }
-                </Anchor>
-                <br></br>
-                <Anchor route=Route::Score>
-                { "Score Board" }
-                </Anchor>
-                <br></br>
-            </div>
+            <BrowserRouter>
+                { self.view_nav(ctx.link()) }
 
+                <main>
+                    <Switch<Route> render={Switch::render(switch)} />
+                </main>
 
-        // <nav class="w3-sidenav w3-red w3-collapse w3-top w3-large w3-padding" style="z-index:3;width:350px;font-weight:bold" id="mySidenav"><br>
-        //     <a href="javascript:void(0)" class="w3-padding-xlarge w3-hide-large w3-display-topleft w3-hover-white" style="width:100%">Close Menu</a>
-        //     <div class="w3-container">
-        //         <h3 class="w3-padding-64"><b>Play<br>Connect4 / TOOT-OTTO</b></h3>
-        //     </div>
-        //     <a href="#/HowToConnect4" class="w3-padding w3-hover-white">How to Play Connect4</a>
-        //     <a href="#/Connect4Computer" class="w3-padding w3-hover-white">Play Connect4 With Computer</a> 
-        //     <a href="#/Connect4Human" class="w3-padding w3-hover-white">Play Connect4 with Another Human</a> 
-        //     <br></br>
-        //     <a href="#/HowToToot" class="w3-padding w3-hover-white">How to Play TOOT-OTTO</a>
-        //     <a href="#/TootOttoComputer" class="w3-padding w3-hover-white">Play Toot-Otto With Computer</a>
-        //     <a href="#/TootOttoHuman" class="w3-padding w3-hover-white">Play Toot-Otto With Another Human</a>
-        //     <br></br>
-        //     <a href="#/ScoreBoard" class="w3-padding w3-hover-white">View Game History</a>
-        //     <a href="#/Scores" class="w3-padding w3-hover-white">Score Board</a>
-        // </nav>
-            <main>
-                <Router<Route, ()>
-                    render = Router::render(|switch: Route| {
-                        match switch {
-                            Route::WelcomeModel => html!{ <WelcomeModel/> },
-                            Route::Connect4Computer => html!{ <Connect4Computer/> },
-                            Route::Connect4Human => html!{ <Connect4Human/> },
-                            Route::HowToConnect4 => html!{ <HowToConnect4/> },
-                            Route::HowToToot => html!{ <HowToTOOT/> },
-                            Route::TOOTComputer => html!{ <TOOTComputer/> },
-                            Route::TOOTHuman => html!{ <TOOTHuman/> },
-                            Route::ScoreBoard => html!{ <ScoreBoard/> },
-                            Route::Score => html!{ <Score/> },
-                        }
-                    })
-                />
-            </main>
-            </>
+                <h3 class="w3-padding-64"><b>{"Play"}</b><b>{"Connect4 / TOOT-OTTO"}</b></h3>
+            
+            </BrowserRouter>
         }
+    }
+}
+
+impl App {
+    fn view_nav(&self, _link: &Scope<Self>) -> Html {
+        html! {
+            <nav class="w3-sidenav w3-red w3-collapse w3-top w3-large w3-padding" 
+                style="z-index:3;width:350px;font-weight:bold" id="mySidenav"><br/>
+                <a href="javascript:void(0)" class="w3-padding-xlarge w3-hide-large w3-display-topleft w3-hover-white" 
+                style="width:100%">{"Close Menu"}</a>
+                <div class="w3-container">
+                    <h3 class="w3-padding-64"><b>{"Play"}<br/>{"Connect4 / TOOT-OTTO"}</b></h3>
+                </div>
+                <Link<Route> to={Route::HowToConnect4}>{ "How To Play Connect4" }</Link<Route>>
+                // <br/>
+
+                <Link<Route> to={Route::Connect4Computer}>{ "Play Connect4 With Computer" }</Link<Route>>
+                // <br/>
+                
+                <Link<Route> to={Route::Connect4Human}>{ "Play Connect4 With Another Human" }</Link<Route>>
+                // <br/>
+                <br/>
+
+                <Link<Route> to={Route::HowToToot}>{ "How to Play TOOT-OTTO" }</Link<Route>>
+                // <br/>
+
+                <Link<Route> to={Route::TOOTComputer}>{ "Play Toot-Otto With Computer" }</Link<Route>>
+                // <br/>
+
+                <Link<Route> to={Route::TOOTHuman}>{ "Play Toot-Otto With Another Human" }</Link<Route>>
+                // <br/>
+                <br/>
+
+                <Link<Route> to={Route::ScoreBoard}>{ "View Game History" }</Link<Route>>
+                // <br/>
+
+                <Link<Route> to={Route::Score}>{ "Score Board" }</Link<Route>>
+                // <br/>
+            </nav>
+            
+        }
+    }
+}
+
+fn switch(routes: &Route) -> Html {
+    match routes.clone() {
+        Route::WelcomeModel => html! { <WelcomeModel/> },
+        Route::Connect4Computer => html! { <Connect4Computer/> },
+        Route::Connect4Human => html! { <Connect4Human/> },
+        Route::HowToConnect4 => html! { <HowToConnect4/> },
+        Route::HowToToot => html!{ <HowToTOOT/> },
+        Route::TOOTComputer => html! { <TOOTComputer/> },
+        Route::TOOTHuman => html! { <TOOTHuman/> },
+        Route::ScoreBoard => html! { <ScoreBoard/> },
+        Route::Score => html!{ <Score/> },
     }
 }
 
