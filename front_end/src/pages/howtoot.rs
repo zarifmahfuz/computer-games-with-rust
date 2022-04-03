@@ -20,7 +20,7 @@ impl Component for HowToTOOT {
 
     fn view(&self, _ctx: &Context<Self>) -> Html {
         html! {
-            <>
+            <div style="margin-left:25%">
             <div class="w3-container" id="services" style="margin-top:75px">
                 <h5 class="w3-xxxlarge w3-text-red"><b>{"How to Play TOOT-OTTO"}</b></h5>
                 <hr style="width:50px;border:5px solid red" class="w3-round"/>
@@ -43,7 +43,7 @@ impl Component for HowToTOOT {
                 <div> {"For More information on TOOT-OTTO click "} <a href="https://boardgamegeek.com/boardgame/19530/toot-and-otto">{"here"}</a>
                 </div>
             </div>
-            </>
+            </div>
         }
     }
 }
