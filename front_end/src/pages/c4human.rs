@@ -20,7 +20,7 @@ impl Component for Connect4Human {
 
     fn view(&self, _ctx: &Context<Self>) -> Html {
         html! {
-            <>
+            <div id="main" style="margin-left:30%">
             <div class="w3-container" id="services" style="margin-top:75px">
                 <h5 class="w3-xxxlarge w3-text-red"><b>{"Enter Player Names"}</b></h5>
                 <hr style="width:50px;border:5px solid red" class="w3-round"/>
@@ -44,7 +44,7 @@ impl Component for Connect4Human {
 
                 <canvas id="gameboard" height="480" width="640"></canvas>
             </div>
-            </>
+            </div>
         }
     }
 }
