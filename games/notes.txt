@@ -1,0 +1,94 @@
+State
+MAX = 1;
+MIN = -MAX;
+EMPTY = 0;  // value for empty cell
+row = m;
+cols = n;
+size = rows * cols;
+disp = { 'o', '-', 'x' };       // how pieces are displayed; min - empty - max
+
+to_move: i64;   // whose turn is it to move
+filled: i64;    // number of non-empty squares
+declare 2d vector grid of size mxn, initialized with values EMPTY;
+
+in the constructor, initialize to_move = MAX and filled = 0;
+
+METHOD - done
+int max_value()
+return MAX if MAX won, MIN if MIN won, and 0 otherwise
+logic -
+
+METHOD - done
+bool make_move(x, y)
+make move (x, y) for player to_move (including board change, filled, and
+to_move changes) and return true if and only if move is legal
+if the move is illegal, the state should not be changed
+pre-condition: x, y within range
+
+METHOD - done
+int get_to_move()
+return player to_move
+
+METHOD - done?
+for each game state, #possibilites to insert a chip = cols;
+insert_chip(column)
+    find the highest index of a non-empty row in that column
+    insert into that row
+
+OPTIONAL METHOD
+char get_disp()
+// return character corresponding to square content (MIN,EMPTY,MAX)
+
+METHOD
+solve(State &st)
+max_value = st.max_value()
+if max_value != 0
+    a player already won
+if max_value == 0 && st.full()
+    game ends in a draw
+tuple<int,int,int> move = negamax(st);
+move holds the best move for ai
+make that move on input state.
+return
+
+so, overall flow of the program:
+player_1 makes a move -> modifiy the game state
+call solve(game state)
+repeat until we have a winner
+
+
+let us also store the total number of moves made in the game state. to determine a terminal value in view of
+MAX, value = 10000 * rows * cols / moves;
+
+track the number of three in a rows for MAX and MIN in the game state.
+
+
+going back to the max_value() function logic
+check the game state to see if we have a winner
+we need to check horizontally, vertically and diagonally.
+
+- - - - - - -
+- - - - - - -
+- - - - - - -
+- - - o - o -
+- - - x o x -
+- - x o x x -
+- - o x o o -
+MAX wins~!
+
+2d visited vector of size mxn, initialized to false
+diagonal_bleft, diagonal_bright, diagonal_tleft, diagonal_tright
+horizontal_left, horizontal_right
+vertical_up, vertial_down
+
+dfs(&st, &diags, &horis, &verts, x, y)
+if any of the variables in diags, horis and verts have the value +4/-4, we have a winner
+    return MAX if +4, MIN if -4
+
+if (!check_bounds(x, y) || visited[x][y])
+    return EMPTY
+
+a square needs to be filled if we want to continue recursing
+visited[x][y] = true;
+call dfs for the 8 neighbours of (x, y); 
+before calling them, we also need to modify the respective diags, horis and verts
