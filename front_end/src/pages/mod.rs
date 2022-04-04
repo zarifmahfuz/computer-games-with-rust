@@ -7,3 +7,4 @@ pub mod tootcomputer;
 pub mod toothuman;
 pub mod scoreboard;
 pub mod score;
+mod tootcanvas;

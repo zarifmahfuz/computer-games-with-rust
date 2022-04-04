@@ -26,8 +26,52 @@
       table tr:nth-child(even) {
         background-color: #ffffff;
       }
-    </style>
-  </head>
+      body {
+        padding-top:70px;
+        width: 100%;
+        height: 100%;
+        width: 100%;
+        height: 100%;
+        font-family: "Source Sans Pro","Helvetica Neue",Helvetica,Arial,sans-serif;
+    }
 
-  <body></body>
+    html {
+    overflow: scroll;
+    }
+    </style>
+    <body ng-app="Connect4App">
+
+      <head>
+          <title>Connect4 with Toot-and-Otto</title>
+          <meta charset="utf-8" />
+          <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+          <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=1" name="viewport" />
+          <script>
+              var Module = {};
+              var __cargo_web = {};
+              Object.defineProperty(Module, 'canvas', {
+                  get: function () {
+                      if (__cargo_web.canvas) {
+                          return __cargo_web.canvas;
+                      }
+                      var canvas = document.createElement('canvas');
+                      document.querySelector('body').appendChild(canvas);
+                      __cargo_web.canvas = canvas;
+                      return canvas;
+                  }
+              });
+          </script>
+      </head>
+  
+      <body style="margin: 0; padding: 0; height: 100vh; overflow: auto">
+          <!--This is required to avoid a runtime error at startup-->
+          <script>Module = {};</script>
+          <script src="/frontend.js"></script>
+      </body>
+  </head>
+  <!-- <div class="w3-main" style="margin-left:1000px;margin-right:40px"></div> -->
+  <!-- <body>
+  </body>
+   -->
+  
 </html>
