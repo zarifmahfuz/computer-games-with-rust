@@ -274,7 +274,7 @@ fn alpha_beta(st: &mut Connect4State, height: i32, mut alpha: i32, beta: i32) ->
     }
     // base case 2
     if height == 0 {
-        // we can't search any furthe; we need to estimate who is the winner at this state;
+        // we can't search any further; we need to estimate who is the winner at this state;
         st.update_three_consec();
         let score_max = 10000 * (st.rows as i32) * (st.cols as i32) / st.moves_made;
         if st.count_max_three_consec > st.count_min_three_consec {
