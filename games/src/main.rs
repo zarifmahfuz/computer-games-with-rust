@@ -43,9 +43,11 @@ fn main() {
 
         winner = game.check_winner();
     }
-    if winner > 0 {
+    if winner == 1 {
         println!("Computer Wins!");
-    } else {
+    } else if winner == -1 {
         println!("You win!");
+    } else if winner == 2 {
+        println!("Draw!");
     }
 }

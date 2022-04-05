@@ -1,0 +1,17 @@
+test case 1
+rows = 4, cols = 5
+search depth = 5
+user plays moves: 4,4,4,2,3,0,2,3,1,3
+expected output = Draw
+
+test case 2
+rows = 6, cols = 7
+search depth = 5
+user plays moves: 6,6,6,5,0
+expected output = Computer Wins
+
+test case 3
+rows = 6, cols = 7
+search depth = 5
+user plays moves: 4,3,5,5,6,6,6,1,1,5,2,1,2,3,0,3,1,2
+expected output = Computer Wins

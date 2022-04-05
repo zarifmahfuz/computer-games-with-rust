@@ -72,30 +72,37 @@ impl Connect4State {
             return (-1, -1);
         }
         
-        if self.grid[0][col] == self.empty {
-            let col_to_move: usize;
-            if self.against_ai {
-                let value = minimax(self, self.ai_search_height, -(i32::MAX), i32::MAX);
-                col_to_move = value.1 as usize;
-            } else {
-                col_to_move = col;
+        let col_to_move: usize;
+        if self.against_ai {
+            let value = minimax(self, self.ai_search_height, -(i32::MAX), i32::MAX);
+            if value.1 < 0 {
+                panic!("Minimax returned negative column index!")
             }
-            let select_row = self.find_row(col_to_move);
-            self.grid[select_row][col_to_move] = self.max;
-            self.moves_made += 1;
-            self.to_move = -self.to_move;
-            return (select_row as i32, col_to_move as i32);
+            col_to_move = value.1 as usize;
+        } else {
+            // user requested to place a chip in a column that is full!
+            if self.grid[0][col] != self.empty {
+                return (-1, -1);
+            }
+            col_to_move = col;
         }
-        (-1, -1)
+        let select_row = self.find_row(col_to_move);
+        self.grid[select_row][col_to_move] = self.max;
+        self.moves_made += 1;
+        self.to_move = -self.to_move;
+        return (select_row as i32, col_to_move as i32);
     }
 
-    // returns 1 if MAX won, -1 if MIN won, and 0 otherwise
+    // returns MAX if MAX won, MIN if MIN won, 0 if game is still running and 2 if game is a draw
     pub fn check_winner(&self) -> i32 {
         self.max_value()
     }
 
-    // returns MAX if MAX won, MIN if MIN won, and 0 otherwise
+    // returns MAX if MAX won, MIN if MIN won, 0 if game is still running and 2 if game is a draw
     fn max_value(&self) -> i32 {
+        if self.moves_made as usize >= self.size {
+            return 2;
+        }
         let mut horiz_right_score: i32;
         let mut vert_down_score: i32;
         let mut diag_bottom_right_score: i32;
@@ -426,7 +433,8 @@ impl Connect4State {
 
 // returns (score, column to make move)
 fn minimax(st: &mut Connect4State, height: i32, mut alpha: i32, mut beta: i32) -> (i32, i32) {
-    if height == 0 || height >= (st.size as i32 - st.moves_made) {
+    // if we can't recurse any deeper, we need to estimate this non-terminal state
+    if height == 0 /* || height >= (st.size as i32 - st.moves_made) */ {
         return (st.tab_score(st.max), -1);
     }
     if st.get_to_move() == st.max {
@@ -434,7 +442,7 @@ fn minimax(st: &mut Connect4State, height: i32, mut alpha: i32, mut beta: i32) -
         let mut best_col_to_move = 0;
         let max_value = st.max_value();
         if max_value == st.min {
-            // min wins in the current game state
+            // terminal state: min wins in the current game state
             return (score, -1);
         }
         for j in 0..st.cols {
@@ -463,7 +471,7 @@ fn minimax(st: &mut Connect4State, height: i32, mut alpha: i32, mut beta: i32) -
         let mut best_col_to_move = 0;
         let max_value = st.max_value();
         if max_value == st.max {
-            // max wins in the current game state
+            // terminal state: max wins in the current game state
             return (score, -1);
         }
         for j in 0..st.cols {
