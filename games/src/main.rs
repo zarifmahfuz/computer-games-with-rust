@@ -8,7 +8,7 @@ use std::io::Write;
 fn main() {
     let rows = 6;
     let cols = 7;
-    let max_search_depth = 8;
+    let max_search_depth = 5;
     let mut game = Connect4State::new(rows, cols, max_search_depth, true, &"Zarif".to_string(), &"Computer".to_string());
     let mut winner = game.check_winner();
     game.print_state();
@@ -36,8 +36,9 @@ fn main() {
             break;
         }
 
-        println!("Computer moves: ");
+        print!("Computer moves: ");
         let ret = game.player_2_move(0);
+        println!("in column {}", ret.1);
         game.print_state();
 
         winner = game.check_winner();
