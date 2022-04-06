@@ -4,7 +4,8 @@ curl -X POST -H "Content-Type: application/json" http://127.0.0.1:5000/gameresul
     "p2_name": "Computer",
     "is_draw": false,
     "winner_name": "Computer",
-    "difficulty": "Hard"
+    "difficulty": "Hard",
+    "date_time": "2022-04-06T05:00:00.00Z"
 }'
 
 curl -i -X GET http://127.0.0.1:5000/gameresults
@@ -17,3 +18,5 @@ curl -X POST -H "Content-Type: application/json" http://127.0.0.1:5000/gameresul
     "winner_name": "Computer",
     "difficulty": "Hard",
 }'
+
+curl -i -X DELETE http://127.0.0.1:5000/gameresults

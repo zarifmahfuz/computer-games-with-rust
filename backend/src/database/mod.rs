@@ -4,7 +4,7 @@ use mongodb::options::{ClientOptions};
 use rocket::fairing::{AdHoc};
 use mongodb::results::{InsertOneResult};
 use rocket::futures::TryStreamExt;
-use crate::model::{GameResult, CustomDateTime};
+use crate::model::{GameResult, JsonGameResult};
 
 #[derive(Debug)]
 pub struct MongoDB {
@@ -22,37 +22,40 @@ impl MongoDB {
 
     pub async fn add_game_result(&self, game_result: &mut GameResult) -> mongodb::error::Result<String> {
         let collection = self.database.collection::<GameResult>(self.game_results_col);
-        game_result.date_time = Some(CustomDateTime::BSonFormat(bson::DateTime::now()));
+        // get the highest game number currently in the collection
+        let find_options = FindOptions::builder()
+            .sort(doc! { "_id": -1 })
+            .limit(1)
+            .build();
+        let mut cursor = collection.find(None, find_options).await?;
+        let mut highest_id: String = String::from("0");
+        while let Some(doc) = cursor.try_next().await? {
+            highest_id = doc._id.unwrap();
+            break;
+        }
+        let highest_id: i64 = highest_id.parse::<i64>().unwrap();
+        let next_id = highest_id + 1;
+        println!("Next ID: {}", next_id);
+
+        game_result._id = Some(next_id.to_string());
         let insert: InsertOneResult = collection.insert_one(game_result, None).await?;
         Ok(insert.inserted_id.to_string())
     }
 
-    pub async fn fetch_all_game_results(&self) -> mongodb::error::Result<Vec<GameResult>> {
+    pub async fn fetch_all_game_results(&self) -> mongodb::error::Result<Vec<JsonGameResult>> {
         let collection = self.database.collection::<GameResult>(self.game_results_col);
-        let find_options = FindOptions::builder()
-            .build();
-
-        let mut cursor: Cursor<GameResult> = collection.find(doc! {}, find_options).await?;
-
-        let mut results: Vec<GameResult> = Vec::new();
+        let mut cursor: Cursor<GameResult> = collection.find(doc! {}, None).await?;
+        let mut results: Vec<JsonGameResult> = Vec::new();
         while let Some(result) = cursor.try_next().await? {
-            results.push(result);
+            results.push(JsonGameResult::from(result));
         }
-        let _: Vec<&mut GameResult> = results.iter_mut().map(|result| {
-            // result.date_time = Some(result.date_time.unwrap().to_rfc3339_string())
-            let mut formatted_dt: String = String::from("");
-            if let Some(dt) = &result.date_time {
-                match dt {
-                    CustomDateTime::BSonFormat(bson_dt) => {
-                        formatted_dt = bson_dt.to_rfc3339_string();
-                    }
-                    _ => { }
-                }
-            }
-            result.date_time = Some(CustomDateTime::StringFormat(formatted_dt));
-            result
-        }).collect();
         Ok(results)
+    }
+
+    pub async fn delete_all_game_results(&self) -> mongodb::error::Result<()> {
+        let collection = self.database.collection::<GameResult>(self.game_results_col);
+        collection.delete_many(doc! {}, None).await?;
+        Ok(())
     }
 }
 
