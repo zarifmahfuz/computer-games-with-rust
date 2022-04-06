@@ -6,7 +6,7 @@ use rocket::serde::{Serialize, Deserialize, json::Json};
 use rocket::response::{Debug, status::Created};
 use std::error::Error;
 use rocket::State;
-use crate::model::{GameResult, JsonGameResult};
+use crate::model::{GameResult, JsonGameResult, Leaderboard};
 use crate::utils::GenericError;
 
 #[post("/gameresults", format = "json", data = "<game_result>")]
@@ -18,7 +18,16 @@ async fn create(game_result: Json<JsonGameResult>, database: &State<database::Mo
 
 #[get("/gameresults")]
 async fn list(database: &State<database::MongoDB>) -> Result<Json<Vec<JsonGameResult>>, GenericError> {
-    match database.fetch_all_game_results().await {
+    match database.fetch_all_game_results(None).await {
+        Ok(game_results) => Ok(Json(game_results)),
+        Err(error) => Err(GenericError::new(&*format!("{:?}", error)))
+    }
+}
+
+#[get("/gameresults?<winner_name>")]
+async fn list_by_winner(winner_name: String, database: &State<database::MongoDB>) -> Result<Json<Vec<JsonGameResult>>, GenericError> {
+    println!("Route works, name: {}", winner_name);
+    match database.fetch_all_game_results(Some(winner_name)).await {
         Ok(game_results) => Ok(Json(game_results)),
         Err(error) => Err(GenericError::new(&*format!("{:?}", error)))
     }
@@ -32,12 +41,29 @@ async fn delete(database: &State<database::MongoDB>) -> Result<(), GenericError>
     }
 }
 
+#[get("/leaderboard")]
+async fn list_top_players(database: &State<database::MongoDB>) -> Result<Json<Vec<Leaderboard>>, GenericError>  {
+    match database.get_leaderboard(None).await {
+        Ok(leaders) => Ok(Json(leaders)),
+        Err(error) => Err(GenericError::new(&*format!("{:?}", error)))
+    }
+}
+
+#[get("/leaderboard?<difficulty>")]
+async fn list_top_players_by_difficulty(difficulty: String, database: &State<database::MongoDB>) 
+    -> Result<Json<Vec<Leaderboard>>, GenericError>  {
+    match database.get_leaderboard(Some(difficulty)).await {
+        Ok(leaders) => Ok(Json(leaders)),
+        Err(error) => Err(GenericError::new(&*format!("{:?}", error)))
+    }
+}
+
 #[rocket::main]
 async fn main() -> Result<(), Box<dyn Error>> {
     // before Rocket can dispatch requests to a route, the route needs to be mounted
     rocket::build()
         .attach(database::init().await) // connect to the database
-        .mount("/", routes![create, list, delete])
+        .mount("/", routes![create, list, delete, list_by_winner, list_top_players, list_top_players_by_difficulty])
         .launch()
         .await?;
     Ok(())

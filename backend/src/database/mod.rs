@@ -4,7 +4,7 @@ use mongodb::options::{ClientOptions};
 use rocket::fairing::{AdHoc};
 use mongodb::results::{InsertOneResult};
 use rocket::futures::TryStreamExt;
-use crate::model::{GameResult, JsonGameResult};
+use crate::model::{GameResult, JsonGameResult, Leaderboard};
 
 #[derive(Debug)]
 pub struct MongoDB {
@@ -42,9 +42,13 @@ impl MongoDB {
         Ok(insert.inserted_id.to_string())
     }
 
-    pub async fn fetch_all_game_results(&self) -> mongodb::error::Result<Vec<JsonGameResult>> {
+    pub async fn fetch_all_game_results(&self, winner_name: Option<String>) -> mongodb::error::Result<Vec<JsonGameResult>> {
         let collection = self.database.collection::<GameResult>(self.game_results_col);
-        let mut cursor: Cursor<GameResult> = collection.find(doc! {}, None).await?;
+        let filter = match winner_name {
+            Some(name) => Some(doc! { "winner_name": name }),
+            None => None
+        };
+        let mut cursor: Cursor<GameResult> = collection.find(filter, None).await?;
         let mut results: Vec<JsonGameResult> = Vec::new();
         while let Some(result) = cursor.try_next().await? {
             results.push(JsonGameResult::from(result));
@@ -56,6 +60,46 @@ impl MongoDB {
         let collection = self.database.collection::<GameResult>(self.game_results_col);
         collection.delete_many(doc! {}, None).await?;
         Ok(())
+    }
+
+    pub async fn get_leaderboard(&self, difficulty: Option<String>) -> mongodb::error::Result<Vec<Leaderboard>> {
+        let collection = self.database.collection::<GameResult>(self.game_results_col);
+        // we need to group by winner name and retrieve the winner name and size of each group
+        let mut stage_filter_difficulty = doc! {
+            "$match": { }
+        };
+        if let Some(diff) = difficulty {
+            stage_filter_difficulty = doc! {
+                "$match": {
+                    "difficulty": diff
+                }
+            }
+        }
+        let stage_group_winner = doc! {
+            "$group": {
+                "_id": "$winner_name",
+                // count the number of wins in the group
+                "wins": { "$sum": 1 },
+            }
+        };
+        let stage_sort_desc = doc! {
+            "$sort": {"wins": -1}
+        };
+        let stage_rename_field = doc! {
+            "$project": {
+                "winner_name": "$_id",
+                "wins": "$wins"
+            }
+        };
+        let pipeline = vec![stage_filter_difficulty, stage_group_winner, stage_sort_desc, stage_rename_field];
+        let mut results = collection.aggregate(pipeline, None).await?;
+        let mut leaders: Vec<Leaderboard> = Vec::new();
+        while let Some(result) = results.try_next().await? {
+            let doc: Leaderboard = bson::from_document(result)?;
+            println!("* {:?}", doc);
+            leaders.push(doc);
+        }
+        Ok(leaders)
     }
 }
 

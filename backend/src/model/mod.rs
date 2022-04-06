@@ -58,3 +58,13 @@ impl From<GameResult> for JsonGameResult {
         }
     }
 }
+
+// holds grouped data for a leaderboard request
+#[derive(Debug, Clone, Deserialize, Serialize)]
+#[serde(crate = "rocket::serde")]
+pub struct Leaderboard {
+    #[serde(rename = "winner_name")]
+    _id: String,
+    #[serde(default)]
+    wins: i64,
+}
