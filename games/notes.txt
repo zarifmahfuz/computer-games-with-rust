@@ -76,19 +76,30 @@ we need to check horizontally, vertically and diagonally.
 - - o x o o -
 MAX wins~!
 
-2d visited vector of size mxn, initialized to false
-diagonal_bleft, diagonal_bright, diagonal_tleft, diagonal_tright
-horizontal_left, horizontal_right
-vertical_up, vertial_down
 
-dfs(&st, &diags, &horis, &verts, x, y)
-if any of the variables in diags, horis and verts have the value +4/-4, we have a winner
-    return MAX if +4, MIN if -4
+how can I get the number of open three in a rows for MAX/MIN?
+iterate over the entire grid
+if a cell is empty
+    case 1: cell is in the middle of an open three in a row along the main diagonal
+    case 2: cell is in the middle of an open three in a row along the secondary diagonal
+    case 3: cell forms an open three in a row along the bottom-right diagonal
+    case 4: cell forms an open three in a row along the bottom-left diagonal
+    case 5: cell forms an open three in a row along the top-left diagonal
+    case 6: cell forms an open three in a row along the top-right diagonal
+    case 7: cell is in the middle of an open three in a row horizontally
+    case 8: cell is in the middle of an open three in a row vertically
+    case 9: cell forms an open three in a row to the right
+    case 10: cell forms an open three in a row to the left
+    case 11: cell forms an open three in row to the top
+    case 12: cell forms an open three in row to the bottom
 
-if (!check_bounds(x, y) || visited[x][y])
-    return EMPTY
+    if either of the 12 cases is true:
+        increment count_three_consec
 
-a square needs to be filled if we want to continue recursing
-visited[x][y] = true;
-call dfs for the 8 neighbours of (x, y); 
-before calling them, we also need to modify the respective diags, horis and verts
+
+I need to be checking for draw.
+we have a draw if moves_made == board size
+
+
+references:
+1. https://github.com/stratzilla/connect-four

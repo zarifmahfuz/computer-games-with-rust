@@ -1,0 +1,19 @@
+curl -X POST -H "Content-Type: application/json" http://127.0.0.1:5000/gameresults -d '{
+    "game_type": "Connect-4",
+    "p1_name": "Zarif",
+    "p2_name": "Computer",
+    "is_draw": false,
+    "winner_name": "Computer",
+    "difficulty": "Hard"
+}'
+
+curl -i -X GET http://127.0.0.1:5000/gameresults
+
+INVALID POST REQUEST EXAMPLE -
+curl -X POST -H "Content-Type: application/json" http://127.0.0.1:5000/gameresults -d '{
+    "game_type": "Connect-4",
+    "p1_name": "Zarif",
+    "is_draw": false,
+    "winner_name": "Computer",
+    "difficulty": "Hard",
+}'

@@ -1,0 +1,14 @@
+Database Schema
+
+GameResults
+- game_number: String
+- game_type: String
+- p1_name: String
+- p2_name: String
+- is_draw: Boolean
+- winner_name: String
+- difficulty: String
+- game_date: DateTime
+
+
+cargo watch -x run
