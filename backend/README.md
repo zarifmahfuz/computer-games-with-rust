@@ -46,7 +46,11 @@ Response:
 "9"
 ```
 
-^Here, `9` is the id of the newly created document.
+**Note 1**: You must specify all the fields as shown here. For the `game_type` field, please enter either of `Connect-4` or `TootAndOtto`. For the `difficulty` field, please enter either of "Easy", "Medium" or "Hard". Ensure that the `winner_name` field matches with either the `p1_name` or the `p2_name` field.
+
+**Note 2**: You will need to specify the `date_time` field as an [RFC3339](https://datatracker.ietf.org/doc/html/rfc3339) formatted string.
+
+**Note 3**: In the above response, `9` is the id of the newly created document.
 
 #### Retrieve all game results for a particular winner
 
