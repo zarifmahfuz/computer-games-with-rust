@@ -1,0 +1,93 @@
+search_height = 5
+- - - - - 
+- - - - - 
+- - - - - 
+- - - - - 
+
+Choose a column: 2
+Your move:
+- - - - - 
+- - - - - 
+- - - - - 
+- - o - - 
+Computer moves: in column 2
+- - - - - 
+- - - - - 
+- - x - - 
+- - o - - 
+Choose a column: 3
+Your move:
+- - - - - 
+- - - - - 
+- - x - - 
+- - o o - 
+Computer moves: in column 1
+- - - - - 
+- - - - - 
+- - x - - 
+- x o o - 
+Choose a column: 1
+Your move:
+- - - - - 
+- - - - - 
+- o x - - 
+- x o o - 
+Computer moves: in column 2
+- - - - - 
+- - x - - 
+- o x - - 
+- x o o - 
+Choose a column: 2
+Your move:
+- - o - - 
+- - x - - 
+- o x - - 
+- x o o - 
+Computer moves: in column 4
+- - o - - 
+- - x - - 
+- o x - - 
+- x o o x 
+Choose a column: 1
+Your move:
+- - o - - 
+- o x - - 
+- o x - - 
+- x o o x 
+Computer moves: in column 1
+- x o - - 
+- o x - - 
+- o x - - 
+- x o o x 
+Choose a column: 3
+Your move:
+- x o - - 
+- o x - - 
+- o x o - 
+- x o o x 
+Computer moves: in column 3
+- x o - - 
+- o x x - 
+- o x o - 
+- x o o x 
+Choose a column: 0
+Your move:
+- x o - - 
+- o x x - 
+- o x o - 
+o x o o x 
+Computer moves: in column 4
+- x o - - 
+- o x x - 
+- o x o x 
+o x o o x 
+Choose a column: 4
+Your move:
+- x o - - 
+- o x x o 
+- o x o x 
+o x o o x 
+thread 'main' panicked at 'index out of bounds: the len is 5 but the index is 18446744073709551615', src/connect4.rs:281:15
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+Computer moves: %                                                                                                                      
+zarifmahfuz@ZarifMacfuz games % 
