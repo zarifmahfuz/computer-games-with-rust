@@ -29,8 +29,8 @@ macro_rules! enclose {
 pub struct TOOTComputer {
     player1: String,
     player2: String,
-    difficulty: String,
-    TO: String,
+    difficulty: i32,
+    TO: i32,
     // used to update name
     name_callback: Callback<InputEvent>,
     // used to update diff
@@ -46,6 +46,7 @@ pub struct TOOTComputer {
     start_or_end: bool,
     new_select_col: usize,
     game: Rc<RefCell<Game>>,
+    winner: i32,
 }
 
 // draw the background for you
@@ -58,12 +59,12 @@ fn background(game: Rc<RefCell<Game>>) {
         .unwrap();
 
     let context: CanvasRenderingContext2d = canvas.get_context().unwrap();
-    log::info!("im here");
+    // log::info!("im here");
     context.save();
     context.set_fill_style_color("#00bfff");
     context.begin_path();
-    let rows = game.clone().borrow().num_row;
-    let cols = game.clone().borrow().num_col;
+    let rows = game.clone().borrow().rows;
+    let cols = game.clone().borrow().cols;
     for y in 0..rows {
         for x in 0..cols {
             context.arc(
@@ -82,7 +83,7 @@ fn background(game: Rc<RefCell<Game>>) {
     context.restore();
 }
 // for player draw
-fn test_draw(game: Rc<RefCell<Game>>, col: usize) {
+fn test_draw(game: Rc<RefCell<Game>>, col: usize, TO: i32) {
 
     let canvas: CanvasElement = document()
         .query_selector("#background")
@@ -92,7 +93,7 @@ fn test_draw(game: Rc<RefCell<Game>>, col: usize) {
         .unwrap();
 
     let context: CanvasRenderingContext2d = canvas.get_context().unwrap();
-    log::info!("im here {}", col);
+    // log::info!("im here {}", col);
     context.save();
     context.set_fill_style_color("#ff0051");
     context.begin_path();
@@ -104,7 +105,7 @@ fn test_draw(game: Rc<RefCell<Game>>, col: usize) {
         _ => println!("Don't have this col"),
     }
     row = row+1;
-    let rows = game.clone().borrow().num_row;
+    let rows = game.clone().borrow().rows;
     if row <=rows {
         game.borrow_mut().h_map.insert(col,row);
         row = rows-row;
@@ -119,15 +120,53 @@ fn test_draw(game: Rc<RefCell<Game>>, col: usize) {
         context.fill(FillRule::NonZero);
     }
     context.restore();
+    let mut text = "T";
+    if TO == 0 {
+        text = "T";
+    }
+    else if TO == 1{
+        text = "O";
+    }
+    context.set_font("bold 25px serif");
+    // context.fill_text(text, ((col as f64)- 8.5) as f64, ((row as f64) + 8.0) as f64, None);
+    context.fill_text(text, (75 * col + 100 -9) as f64, (75 * row + 50 + 8) as f64, None);
+    context.restore();
+
 }
-// for computer draw
-fn computer_draw(game: Rc<RefCell<Game>>, col: usize) {
+
+fn winner_draw(game: Rc<RefCell<Game>>, winner: i32) {
     let canvas: CanvasElement = document().query_selector("#background")
     .unwrap().unwrap().try_into().unwrap();
 
     let context: CanvasRenderingContext2d = canvas.get_context().unwrap();
     // println!("I'mghere");
-    log::info!("im here");
+    // log::info!("im here");
+    context.save();
+    context.set_fill_style_color("#d000ff");
+    context.begin_path();
+
+    context.set_font("bold 25px serif");
+    let mut text = "Computer won, click to restart.";
+    if winner == -1 {
+        text = "You won, click to restart.";
+    }
+    else if winner == 1 {
+        text = "Computer won, click to restart.";
+    }
+    context.fill_text(text, (75+100) as f64, (75) as f64, None);
+    context.restore();
+
+}
+
+
+// for computer draw
+fn computer_draw(game: Rc<RefCell<Game>>, col: usize, TO: i32) {
+    let canvas: CanvasElement = document().query_selector("#background")
+    .unwrap().unwrap().try_into().unwrap();
+
+    let context: CanvasRenderingContext2d = canvas.get_context().unwrap();
+    // println!("I'mghere");
+    // log::info!("im here");
     context.save();
     context.set_fill_style_color("#00ff59");
     context.begin_path();
@@ -140,7 +179,7 @@ fn computer_draw(game: Rc<RefCell<Game>>, col: usize) {
     }
     row = row+1;
     // row = 6-row;
-    let rows = game.clone().borrow().num_row;
+    let rows = game.clone().borrow().rows;
     if row <=rows {
         game.borrow_mut().h_map.insert(col,row);
         row = rows-row;
@@ -155,6 +194,17 @@ fn computer_draw(game: Rc<RefCell<Game>>, col: usize) {
         context.fill(FillRule::NonZero);
     }
     context.restore();
+    let mut text = "T";
+    if TO == 0 {
+        text = "T";
+    }
+    else if TO == 1{
+        text = "O";
+    }
+    // context.fill_text(text, ((col as f64)- 8.5) as f64, ((row as f64) + 8.0) as f64, None);
+    context.set_font("bold 25px serif");
+    context.fill_text(text, (75 * col + 100 -9) as f64, (75 * row + 50 + 8) as f64, None);
+
 }
 
 #[derive(Debug)]
@@ -174,24 +224,17 @@ impl Component for TOOTComputer {
     type Properties = ();
 
     fn create(_ctx: &Context<Self>) -> Self {
+        let rows = 6;
+        let cols = 7;
+        let max_search_depth = 3;
 
-        let game = Rc::new(RefCell::new(Game {
-            p1: "".to_string(),
-            p2: "".to_string(),
-            play_with_computer: false,
-            winner: "".to_string(),
-            total_move: 0,
-            max_ai_depth: 4,
-            h_map: HashMap::new(),
-            num_row:6,
-            num_col:7,
-        }));
+        let game = Rc::new(RefCell::new(Game::new(rows, cols, max_search_depth, true, &"".to_string(), &"Computer".to_string())));
 
         TOOTComputer {
             player1: "".to_string(),
             player2: "Computer".to_string(),
-            difficulty: "".to_string(),
-            TO: "".to_string(),
+            difficulty: 1,
+            TO: 1,
             name_callback: _ctx.link().callback(|e: InputEvent| Msg::setPlayerName(e)),
             diff_callback: _ctx.link().callback(|e: InputEvent| Msg::setDifficulty(e)),
             TO_callback: _ctx.link().callback(|e: InputEvent| Msg::setTO(e)),
@@ -200,6 +243,7 @@ impl Component for TOOTComputer {
             start_or_end: false,
             new_select_col: 0,
             game: game.clone(),
+            winner: 0,
         }
     }
 
@@ -213,8 +257,8 @@ impl Component for TOOTComputer {
                 self.player1 = owned;
             }
 
-            Msg::setDifficulty(val) => {self.difficulty = val.data().unwrap();}
-            Msg::setTO(val) => {self.TO = val.data().unwrap();}
+            Msg::setDifficulty(val) => {self.difficulty = 1;}
+            Msg::setTO(val) => {self.TO = 1;}
             Msg::StartGame => {
                 // js! {
                 //     console.log("Something");
@@ -230,25 +274,15 @@ impl Component for TOOTComputer {
                     .unwrap();
 
                 self.difficulty = match difficulty_selector.value().unwrap().as_str() {
-                    "easy" => "easy".to_string(),
-                    "medium" => "medium".to_string(),
-                    "hard" => "hard".to_string(),
-                    _ => "easy".to_string(),
+                    "easy" => 1,
+                    "medium" => 2,
+                    "hard" => 3,
+                    _ => 1,
                 };
 
 
 
-                self.game = Rc::new(RefCell::new(Game {
-                    p1: self.player1.clone(),
-                    p2: self.player2.clone(),
-                    play_with_computer: false,
-                    winner: "".to_string(),
-                    total_move: 0,
-                    max_ai_depth: 4,
-                    h_map: HashMap::new(),
-                    num_row:6,
-                    num_col:7,
-                }));
+                self.game = Rc::new(RefCell::new(Game::new(6, 7, self.difficulty, true, &self.player1, &"Computer".to_string())));
 
                 //////
                 let canvas: CanvasElement = document()
@@ -266,10 +300,10 @@ impl Component for TOOTComputer {
 
                 canvas.add_event_listener(enclose!((context) move |event: ClickEvent| {
                     let x_click = event.client_x() - rect.get_left() as i32;
-                    let num_cols = game_clone.clone().borrow().num_col;
-                    for col in 0..num_cols {
+                    let colss = game_clone.clone().borrow().cols;
+                    for col in 0..colss {
                         let x_col = 75 * col as i32 + 100;
-                            log::info!("col is {}", col);
+                            // log::info!("col is {}", col);
                             if (x_click - x_col) * (x_click - x_col) <= 25 * 25 {
                                 link.send_message(Msg::clicked(Some(col as usize)));
                                 return;
@@ -283,23 +317,53 @@ impl Component for TOOTComputer {
             }
             Msg::EndGame => {self.start_or_end = false;}
             Msg::clicked(col) => {
-                let sel_box: SelectElement = document()
-                    .query_selector("#TO")
+                if self.winner == 0{
+                    let sel_box: SelectElement = document()
+                        .query_selector("#TO")
+                        .unwrap()
+                        .unwrap()
+                        .try_into()
+                        .unwrap();
+                
+                    self.TO = match sel_box.value().unwrap().as_str() {
+                        "T" => 0,
+                        "O" => 1,
+                        _ => 1,
+                    };
+                    if col.is_some() {
+                        let temp_col = col.unwrap() as usize;
+                        self.new_select_col = temp_col;
+                        test_draw(self.game.clone(), temp_col, self.TO);
+                        self.game.clone().borrow_mut().player_1_move(temp_col, self.TO);
+                        self.winner = self.game.clone().borrow().check_winner();
+                        if self.winner == -1 {
+                            // log::info!("player win");
+                            winner_draw(self.game.clone(), self.winner);
+                        }
+                        else if self.winner == 0 {
+                            let (row_to_move, col_to_move, TO_flag) = self.game.clone().borrow_mut().player_2_move(0);
+                            // log::info!("TO falg is {}",TO_flag);
+                            computer_draw(self.game.clone(), col_to_move as usize, TO_flag);
+                            self.winner = self.game.clone().borrow().check_winner();
+                            if self.winner == 1 {
+                                // log::info!("computer win");
+                                winner_draw(self.game.clone(), self.winner);
+                            }
+                        }
+                    }
+                }
+                else {
+                    self.winner = 0;
+                    self.game = Rc::new(RefCell::new(Game::new(6, 7, self.difficulty, true, &self.player1, &"Computer".to_string())));
+                    let canvas: CanvasElement = document()
+                    .query_selector("#background")
                     .unwrap()
                     .unwrap()
                     .try_into()
                     .unwrap();
-            
-                self.TO = match sel_box.value().unwrap().as_str() {
-                    "T" => "T".to_string(),
-                    "O" => "O".to_string(),
-                    _ => "".to_string(),
-                };
-                if col.is_some() {
-                    let temp_col = col.unwrap() as usize;
-                    self.new_select_col = temp_col;
-                    test_draw(self.game.clone(), temp_col);
-                    computer_draw(self.game.clone(), 5);
+                    let context: CanvasRenderingContext2d = canvas.get_context().unwrap();
+                    context.clear_rect(0.0, 0.0, canvas.width() as f64, canvas.height() as f64);
+                    background(self.game.clone());
                 }
                 // test_draw(self.game.clone(), 0);
             }

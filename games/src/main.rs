@@ -8,7 +8,7 @@ use std::io::Write;
 fn main() {
     let rows = 6;
     let cols = 7;
-    let max_search_depth = 5;
+    let max_search_depth = 3;
     let mut game = Connect4State::new(rows, cols, max_search_depth, true, &"Zarif".to_string(), &"Computer".to_string());
     let mut winner = game.check_winner();
     game.print_state();
