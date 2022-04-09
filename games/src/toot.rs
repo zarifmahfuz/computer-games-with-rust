@@ -361,7 +361,7 @@ fn minimax(st: &mut TootAndOttoState, height: i32, mut alpha: i32, mut beta: i32
         let max_value = st.max_value();
         if max_value == st.min {
             // terminal state: min wins in the current game state
-            return (score, -1, 0);
+            return (score / st.moves_made, -1, 0);
         }
         // trying placing T in all children of the current game state
         for j in 0..st.cols {
@@ -413,7 +413,7 @@ fn minimax(st: &mut TootAndOttoState, height: i32, mut alpha: i32, mut beta: i32
         let max_value = st.max_value();
         if max_value == st.max {
             // terminal state: max wins in the current game state
-            return (score, -1, 0);
+            return (score / st.moves_made, -1, 0);
         }
         // try placing T in all children of the current game state
         for j in 0..st.cols {
