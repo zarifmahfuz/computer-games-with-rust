@@ -342,7 +342,7 @@ impl Component for TOOTComputer {
                         }
                         else if self.winner == 0 {
                             let (row_to_move, col_to_move, TO_flag) = self.game.clone().borrow_mut().player_2_move(0);
-                            // log::info!("TO falg is {}",TO_flag);
+                            log::info!("TO falg is {} in canvas",TO_flag);
                             computer_draw(self.game.clone(), col_to_move as usize, TO_flag);
                             self.winner = self.game.clone().borrow().check_winner();
                             if self.winner == 1 {

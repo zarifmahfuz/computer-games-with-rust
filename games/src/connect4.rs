@@ -438,7 +438,7 @@ fn minimax(st: &mut Connect4State, height: i32, mut alpha: i32, mut beta: i32) -
                         score = value.0;
                         best_col_to_move = j as i32;
                         final_TO = 1;
-                        println!("decide use T");
+                        // println!("decide use T");
                     }
                     alpha = std::cmp::max(alpha, score);
                     if alpha >= beta {

@@ -1,5 +1,6 @@
 use std::collections::HashMap;
-
+// use random_number::random;
+use wbg_rand::{Rng, wasm_rng, math_random_rng};
 #[derive(Clone)]
 pub struct Game {
     pub max: i32,
@@ -96,10 +97,10 @@ impl Game {
                 panic!("Minimax returned negative column index!")
             }
             col_to_move = value.1 as usize;
-            if value.2 == 1 {
+            if value.2 as i32 == 1 {
                 TO_flag = 1;
             }
-            else if value.2 == 0{
+            else if value.2 as i32 == 0{
                 TO_flag = 0
             }
         } else {
@@ -117,10 +118,10 @@ impl Game {
         else if self.against_ai && TO_flag == 0 {
             self.grid[select_row][col_to_move] = self.min;
         }
-        else {
-            self.grid[select_row][col_to_move] = self.max;
-        }
-        // log::info!("TO flag is {}......",TO_flag);
+        // else {
+        //     self.grid[select_row][col_to_move] = self.max;
+        // }
+        log::info!("TO flag is {}......",TO_flag);
         // println!("TO flag is {}......",TO_flag);
         // self.predeict_grid[select_row][col_to_move] = self.max;
         self.moves_made += 1;
@@ -228,7 +229,7 @@ impl Game {
         row
     }
 
-    // T
+    // O
     // returns true if move has been made, returns false if move is invalid
     fn ai_make_move1(&mut self, col: usize) -> bool {
         if !self.check_bounds(col) {
@@ -246,7 +247,7 @@ impl Game {
         }
         return false;
     }
-    // O
+    // T
     // returns true if move has been made, returns false if move is invalid
     fn ai_make_move2(&mut self, col: usize) -> bool {
         if !self.check_bounds(col) {
@@ -264,116 +265,309 @@ impl Game {
         }
         return false;
     }
-
     fn tab_score(&self, player_to_check_againt: i32) -> i32 {
-        let mut score: i32 = 0;
-        let mut row: Vec<i32>;
-        let mut col: Vec<i32>;
+        // let mut horiz_right_score: i32;
+        // let mut vert_down_score: i32;
+        // let mut diag_bottom_right_score: i32;
+        // let mut diag_top_right_score: i32;
 
-        /*
-         * horizontal checks, we are looking for sequences of 4
-         * containing any combination of MAX, MIN and EMPTY cells
-         */
+        let mut right = [0; 4];
+        let mut bottom = [0; 4];
+        let mut bottom_right = [0; 4];
+        let mut top_right = [0; 4];
+
         for i in 0..self.rows {
-            row = Vec::new();
             for j in 0..self.cols {
-                row.push(self.grid[i][j]);
-            }
-            for k in 0..(self.cols - 3) {
-                // construct chunks of 4
-                let mut set: Vec<i32> = Vec::new();
-                for l in 0..4 {
-                    set.push(row[k + l]);
+                for ele in 0..4 {
+                    right[ele] = 0;
+                    bottom[ele] = 0;
+                    bottom_right[ele] = 0;
+                    top_right[ele] = 0;
                 }
-                // update score
-                score += self.score_set(set, player_to_check_againt);
-            }
-        }
+                
 
-        // vertical checks
-        for j in 0..self.cols {
-            col = Vec::new();
-            for i in 0..self.rows {
-                col.push(self.grid[i][j]);
-            }
-            for k in 0..(self.rows - 3) {
-                // construct chunks of 4
-                let mut set: Vec<i32> = Vec::new();
-                for l in 0..4 {
-                    set.push(col[k + l]);
+                for k in 0..4 {
+                    // from (i, j) to the right
+                    if j + k < self.cols {
+                        right[k] = self.grid[i][j+k];
+                    }
+                    // from (i, j) to the bottom
+                    if i + k < self.rows {
+                        bottom[k] = self.grid[i+k][j];
+                    }
+                    // from (i, j) to bottom right
+                    if (i + k < self.rows) && (j + k < self.cols) {
+                        bottom_right[k] = self.grid[i+k][j+k];
+                    }
+                    // from (i, j) to top right
+                    if (i as i32 - k as i32 >= 0) && (j + k < self.cols) {
+                        top_right[k] = self.grid[i-k][j+k];
+                    }
                 }
-                // update score
-                score += self.score_set(set, player_to_check_againt);
+                if right[0] == 1 && right[1] == -1 && right[2] == -1 && right[3] == 1 {
+                    return 4;
+                } else if right[0] == -1 && right[1] == 1 && right[2] == 1 && right[3] == -1 {
+                    return -4;
+                } else if bottom[0] == 1 && bottom[1] == -1 && bottom[2] == -1 && bottom[3] == 1 {
+                    return 4;
+                } else if bottom[0] == -1 && bottom[1] == 1 && bottom[2] == 1 && bottom[3] == -1 {
+                    return -4;
+                } else if bottom_right[0] == 1
+                    && bottom_right[1] == -1
+                    && bottom_right[2] == -1
+                    && bottom_right[3] == 1
+                {
+                    return 4;
+                } else if bottom_right[0] == -1
+                    && bottom_right[1] == 1
+                    && bottom_right[2] == 1
+                    && bottom_right[3] == -1
+                {
+                    return -4;
+                } else if top_right[0] == 1
+                    && top_right[1] == -1
+                    && top_right[2] == -1
+                    && top_right[3] == 1
+                {
+                    return 4;
+                } else if top_right[0] == -1
+                    && top_right[1] == 1
+                    && top_right[2] == 1
+                    && top_right[3] == -1
+                {
+                    return -4;
+                }
             }
         }
-
-        // diagonal checks
-        // main diagonals
-        for i in 0..(self.rows - 3) {
-            for j in 0..(self.cols - 3) {
-                // construct chunks of 4
-                let mut diag_set: Vec<i32> = Vec::new();
-                for l in 0..4 {
-                    diag_set.push(self.grid[i + l][j + l]);
-                }
-                // update score
-                score += self.score_set(diag_set, player_to_check_againt);
-            }
-        }
-        // secondary diagonals
-        for i in 0..(self.rows - 3) {
-            for j in 0..(self.cols - 3) {
-                // construct chunks of 4
-                let mut diag_set: Vec<i32> = Vec::new();
-                for l in 0..4 {
-                    diag_set.push(self.grid[i + 3 - l][j + l]);
-                }
-                // update score
-                score += self.score_set(diag_set, player_to_check_againt);
-            }
-        }
-        return score;
+        // no winner
+        return 0;
     }
 
-    fn score_set(&self, set: Vec<i32>, player_to_check_againt: i32) -> i32 {
-        let mut good = 0;
-        let mut bad = 0;
-        let mut empty = 0;
-        for val in set {
-            if val == player_to_check_againt {
-                good += 1;
-            }
-            if val == self.max || val == self.min {
-                bad += 1;
-            }
-            if val == self.empty {
-                empty += 1;
-            }
-        }
-        // bad was calculated as (bad + good), so remove good
-        bad -= good;
-        return self.heauristic(good, bad, empty);
-    }
+    // fn tab_score(&self, player_to_check_againt: i32) -> i32 {
+    //     let mut score = Vec::new();
 
-    fn heauristic(&self, good_points: i32, bad_points: i32, empty_points: i32) -> i32 {
-        if good_points == 4 {
-            // preference to go for winning move vs. block
-            return 500001;
-        } else if good_points == 3 && empty_points == 1 {
-            return 5000;
-        } else if good_points == 2 && empty_points == 2 {
-            return 500;
-        } else if bad_points == 2 && empty_points == 2 {
-            // preference to block
-            return -501;
-        } else if bad_points == 3 && empty_points == 1 {
-            // preference to block
-            return -5001;
-        } else if bad_points == 4 {
-            return -500000;
-        }
-        0
-    }
+    //     let mut row: Vec<i32>;
+    //     let mut col: Vec<i32>;
+
+    //     /*
+    //      * horizontal checks, we are looking for sequences of 4
+    //      * containing any combination of MAX, MIN and EMPTY cells
+    //      */
+    //     for i in 0..self.rows {
+    //         row = Vec::new();
+    //         for j in 0..self.cols {
+    //             row.push(self.grid[i][j]);
+    //         }
+    //         for k in 0..(self.cols - 3) {
+    //             // construct chunks of 4
+    //             let mut set: Vec<i32> = Vec::new();
+    //             for l in 0..4 {
+    //                 set.push(row[k + l]);
+    //             }
+    //             // update score
+    //             score.push(self.score_set(set, player_to_check_againt));
+    //         }
+    //     }
+
+    //     // vertical checks
+    //     for j in 0..self.cols {
+    //         col = Vec::new();
+    //         for i in 0..self.rows {
+    //             col.push(self.grid[i][j]);
+    //         }
+    //         for k in 0..(self.rows - 3) {
+    //             // construct chunks of 4
+    //             let mut set: Vec<i32> = Vec::new();
+    //             for l in 0..4 {
+    //                 set.push(col[k + l]);
+    //             }
+    //             // update score
+    //             score.push(self.score_set(set, player_to_check_againt));
+    //         }
+    //     }
+
+    //     // diagonal checks
+    //     // main diagonals
+    //     for i in 0..(self.rows - 3) {
+    //         for j in 0..(self.cols - 3) {
+    //             // construct chunks of 4
+    //             let mut diag_set: Vec<i32> = Vec::new();
+    //             for l in 0..4 {
+    //                 diag_set.push(self.grid[i + l][j + l]);
+    //             }
+    //             // update score
+    //             score.push(self.score_set(diag_set, player_to_check_againt));
+    //         }
+    //     }
+    //     // secondary diagonals
+    //     for i in 0..(self.rows - 3) {
+    //         for j in 0..(self.cols - 3) {
+    //             // construct chunks of 4
+    //             let mut diag_set: Vec<i32> = Vec::new();
+    //             for l in 0..4 {
+    //                 diag_set.push(self.grid[i + 3 - l][j + l]);
+    //             }
+    //             // update score
+    //             score.push(self.score_set(diag_set, player_to_check_againt));
+    //         }
+    //     }
+    //     let mut max_score = -99999999;
+    //     for i in 0..4 {
+    //         log::info!("score is {}", score[i]);
+    //         if score[i] > max_score && score[i] != 0{
+    //             max_score = score[i];
+
+    //         }
+    //     }
+    //     return max_score;
+    // }
+
+    // fn score_set(&self, set: Vec<i32>, player_to_check_againt: i32) -> i32 {
+    //     let mut good = 0;
+    //     let mut bad = 0;
+    //     let mut empty = 0;
+    //     let mut idx = 0;
+
+    //     if set[0] == self.max && set[1] == self.min && set[2] == self.min && set[3] == self.max {
+    //         good += 4;
+    //     }
+    //     else if set[0] == self.max && set[1] == self.min && set[2] == self.min{
+    //         good += 3;
+    //     }
+    //     // if set[1] == self.min && set[2] == self.min && set[3] == self.max {
+    //     //     good += 3;
+    //     // }
+    //     else if set[0] == self.max && set[1] == self.min {
+    //         good += 2;
+    //     }
+    //     // else if set[0] == self.max {
+    //     //     // log::info!("Find one O");
+    //     //     good += 1;
+    //     // }
+    //     // if set[3] == self.max {
+    //     //     good += 1;
+    //     // }
+    //     // if set[3] == self.min {
+    //     //     bad += 1;
+    //     // }
+        
+    //     // if set[1] == self.min && set[2] == self.min {
+    //     //     good += 2;
+    //     // }
+
+    //     // if set[2] == self.min && set[3] == self.max {
+    //     //     good += 2;
+    //     // }
+
+    //     if set[0] == self.min && set[1] == self.max && set[2] == self.max && set[3] == self.min {
+    //         bad += 4;
+    //     }
+    //     else if set[0] == self.min && set[1] == self.max && set[2] == self.max {
+    //         bad += 3;
+    //     }
+    //     // if set[1] == self.max && set[2] == self.max && set[0] == self.min {
+    //     //     bad += 3;
+    //     // }
+    //     else if set[0] == self.min && set[1] == self.max{
+    //         bad += 2;
+    //     }
+    //     // else if set[0] == self.min {
+    //     //     bad += 1;
+    //     // }
+    //     // if set[1] == self.max && set[2] == self.max {
+    //     //     bad += 2;
+    //     // }
+
+    //     // if set[2] == self.max && set[3] == self.min {
+    //     //     bad += 2;
+    //     // }
+    //     // if set[0] == self.max && set[3] == self.min {
+    //     //     bad += 2;
+    //     // }
+    //     // if set[0] == self.min && set[3] == self.max {
+    //     //     bad += 2;
+    //     // }
+    //     // if set[0] == self.max && set[2] == self.max {
+    //     //     bad += 2;
+    //     // }
+    //     // if set[0] == self.min && set[2] == self.min {
+    //     //     bad += 2;
+    //     // }
+    //     // if set[1] == self.max && set[3] == self.max {
+    //     //     bad += 2;
+    //     // }
+    //     // if set[1] == self.min && set[3] == self.min {
+    //     //     bad += 2;
+    //     // }
+
+    //     for val in set.clone() {
+    //         if val == self.empty {
+    //             empty += 1;
+    //         }
+    //         // idx+=1;
+
+
+    //         // if val == player_to_check_againt {
+    //         //     good += 1;
+    //         // }
+    //         // if val == self.max || val == self.min {
+    //         //     bad += 1;
+    //         // }
+    //         // if val == self.empty {
+    //         //     empty += 1;
+    //         // }
+    //     }
+    //     // bad was calculated as (bad + good), so remove good
+    //     // bad -= good;
+    //     // log::info!("number of good points: {}", good);
+    //     // log::info!("number of bad points: {}", bad);
+    //     return self.heauristic(good, bad, empty);
+    // }
+
+    // fn heauristic(&self, good_points: i32, bad_points: i32, empty_points: i32) -> i32 {
+    //     if good_points == 4 {
+    //         // preference to go for winning move vs. block
+    //         return 500001;
+    //     } 
+    //     else if bad_points == 4 {
+    //         return -500000;
+    //     }
+    //     else if good_points == 3 && empty_points == 1 {
+    //         return 50000;
+    //     } 
+    //     else if bad_points == 3 && empty_points == 1 {
+    //         // preference to block
+    //         return -50001;
+    //     }
+    //     else if good_points == 2 && empty_points == 2 {
+    //         return 500;
+    //     } 
+    //     else if good_points == 1 &&  empty_points == 3 {
+    //         return 50;
+    //     }
+    //     // else if bad_points == 1 &&  empty_points == 3 {
+    //     //     return -51;
+    //     // }
+    //     else if bad_points == 2 && empty_points == 2 {
+    //         // preference to block
+    //         return -501;
+    //     }
+    //     else if good_points == 1 && empty_points == 3 {
+    //         log::info!("Find one good point");
+    //         return 50;
+    //     }
+    //     else if bad_points == 1 && empty_points == 3 {
+    //         log::info!("Find one bad point");
+    //         return -51;
+    //     }
+    //     // } else if bad_points == 3 && empty_points == 1 {
+    //     //     // preference to block
+    //     //     return -50001;
+    //     // } else if bad_points == 4 {
+    //     //     return -500000;
+    //     // }
+    //     0
+    // }
 
     pub fn print_state(&self) {
         let disp = vec!['T', '-', 'O'];     // min - empty - max
@@ -394,6 +588,7 @@ fn minimax(st: &mut Game, height: i32, mut alpha: i32, mut beta: i32) -> (i32, i
         return (st.tab_score(st.max), -1, -1);
     }
     if st.get_to_move() == st.max {
+        log::info!("Max to move");
         // println!("max to move");
         let mut score = i32::MIN;
         let mut best_col_to_move = 0;
@@ -424,17 +619,33 @@ fn minimax(st: &mut Game, height: i32, mut alpha: i32, mut beta: i32) -> (i32, i
             if clone_st2.ai_make_move2(j) {
                 value2 = minimax(&mut clone_st2, height - 1, alpha, beta);
             }
+            if height == 3 {
+                log::info!("value1 {:?}", value1);
+                log::info!("value2 {:?}", value2);
+            }
             if value1.0 > value2.0 {
                 TO_flag = 1;
             }
             else if value1.0 < value2.0{
                 TO_flag = 0;
             }
+            else {
+                let a: bool = math_random_rng().gen();
+                // let rand = rand::thread_rng().gen_range(0, 1);
+                if a{
+                    TO_flag = 1;
+                }
+                else {
+                    TO_flag = 0;
+                }
+            }
 
             if TO_flag == 1{
+                
                 // println!("decide use T");
                 if clone_st.ai_make_move1(j) {
-                    let value = minimax(&mut clone_st, height - 1, alpha, beta);
+                    // let value = minimax(&mut clone_st, height - 1, alpha, beta);
+                    let value = value1;
                     if value.0 > score {
                         score = value.0;
                         best_col_to_move = j as i32;
@@ -449,9 +660,16 @@ fn minimax(st: &mut Game, height: i32, mut alpha: i32, mut beta: i32) -> (i32, i
                 }
             }
             else {
+                // log::info!("decide to use O");
                 // println!("decide to use O");
                 if clone_st.ai_make_move2(j) {
-                    let value = minimax(&mut clone_st, height - 1, alpha, beta);
+                    // let value = minimax(&mut clone_st, height - 1, alpha, beta);
+                    let value = value2;
+                    if height == 3 {
+                        log::info!("value: {}", value.0);
+                        log::info!("score: {}", score);
+                        log::info!("height: {}", height);
+                    }
                     if value.0 > score {
                         score = value.0;
                         best_col_to_move = j as i32;
@@ -471,6 +689,7 @@ fn minimax(st: &mut Game, height: i32, mut alpha: i32, mut beta: i32) -> (i32, i
     } else {
         // println!("min to move");
         // MIN to move
+        log::info!("Min to move");
         let mut score = i32::MAX;
         let mut best_col_to_move = 0;
         let mut TO_flag = 1;
@@ -500,11 +719,23 @@ fn minimax(st: &mut Game, height: i32, mut alpha: i32, mut beta: i32) -> (i32, i
             if clone_st2.ai_make_move2(j) {
                 value2 = minimax(&mut clone_st2, height - 1, alpha, beta);
             }
+            log::info!("value1 {:?}", value1);
+            log::info!("value2 {:?}", value2);
             if value1.0 < value2.0 {
                 TO_flag = 1;
             }
             else if value1.0 > value2.0{
                 TO_flag = 0;
+            }
+            else {
+                // let rand = rand::thread_rng().gen_range(0, 1);
+                let a: bool = math_random_rng().gen();
+                if a{
+                    TO_flag = 1;
+                }
+                else {
+                    TO_flag = 0;
+                }
             }
             if TO_flag == 1 {
                 // println!("decide use T");
