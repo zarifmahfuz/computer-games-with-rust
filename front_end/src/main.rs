@@ -3,6 +3,9 @@ use yew::prelude::*;
 use yew_router::prelude::*;
 use yew::html::Scope;
 
+#[macro_use]
+extern crate requests;
+
 mod pages;
 use pages::{
             welcome::WelcomeModel,

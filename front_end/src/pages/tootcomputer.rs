@@ -1,3 +1,4 @@
+use requests::request;
 use yew::prelude::*;
 // use yew::{html, Html, ChangeData};
 // use yew::components::Select;
@@ -11,10 +12,39 @@ use stdweb::unstable::TryInto;
 use stdweb::web::event::{ClickEvent, ResizeEvent};
 use stdweb::web::html_element::{CanvasElement, SelectElement};
 use stdweb::web::{document, window, CanvasRenderingContext2d, FillRule};
-use web_sys::Document;
+// use web_sys::Document;
 use crate::pages::toot::*;
 use std::collections::HashMap;
 
+// use error_chain::error_chain;
+use serde::Deserialize;
+use serde_json::json;
+use reqwest::Client;
+// use tokio::task;
+
+use wasm_bindgen_futures::futures_0_3::spawn_local;
+
+
+// sue web_sys::Request;
+// use std::env;
+// use reqwest::Client;
+// use yew::format::Nothing;
+// use yew::format::Json;
+// use yew::services::fetch::Request;
+
+// use yew::{
+//     format::{Json, Nothing},
+//     prelude::*,
+//     services::fetch::{FetchService, FetchTask, Request, Response},
+// };
+
+
+// error_chain! {
+//     foreign_links {
+//         EnvVar(env::VarError);
+//         HttpRequest(reqwest::Error);
+//     }
+// }
 // https://stackoverflow.com/questions/57547849/rust-adding-event-listeners-to-a-webassembly-game
 // This reference teach you how to implement this macro rulle and how to add listener to a canvas.
 macro_rules! enclose {
@@ -217,6 +247,7 @@ pub enum Msg {
     EndGame,
     setTO(InputEvent),
     clicked(Option<usize>),
+    record(),
 }
 
 impl Component for TOOTComputer {
@@ -316,7 +347,37 @@ impl Component for TOOTComputer {
                 // while(true){};
             }
             Msg::EndGame => {self.start_or_end = false;}
+
+            Msg::record() => {
+                spawn_local(async move{
+                    let resp = req().await;
+                    log::info!("body = {:#?}", resp);
+                });
+
+                // use futures::prelude::*;
+
+                // futures::stream::iter(0..1)
+                //     .for_each(|c| async move {
+                //         let resp = req().await;
+                //         log::info!("body = {:#?}", resp);
+                //     });
+
+                // let callback = _ctx.link().callback(async move{
+                //     let resp = req().await;
+                //     log::info!("body = {:#?}", resp);
+                // });
+
+                // async move {
+                //     let resp = req().await;
+                //     log::info!("body = {:#?}", resp);
+                // };
+
+            }
             Msg::clicked(col) => {
+                let link = _ctx.link().clone();
+                link.send_message(Msg::record());
+                // let result = post_game();
+
                 if self.winner == 0{
                     let sel_box: SelectElement = document()
                         .query_selector("#TO")
@@ -353,6 +414,51 @@ impl Component for TOOTComputer {
                     }
                 }
                 else {
+                    // post_game();
+                    // let gist_body = json!({
+                    //     "game_type": "Connect-4",
+                    //     "p1_name": "John",
+                    //     "p2_name": "Computer",
+                    //     "is_draw": false,
+                    //     "winner_name": "Computer",
+                    //     "difficulty": "Hard",
+                    //     "date_time": "2022-04-06T05:00:00.00Z"
+                    // });
+                    // let request_url = "http://127.0.0.1:5000/gameresults";
+
+                    // let request = new Request('/myEndpoint', {
+                    //     method: 'POST',
+                    //     body: JSON.stringify(obj)
+                    //    });
+                    // // let response = reqwest::Client::new().post(request_url)
+                    // // .json(&gist_body)
+                    // // .send().await;
+                
+                    // let post_request = Request::post("http://127.0.0.1:5000/gameresults")
+                    // .header("Content-Type", "application/json")
+                    // .body(Json(&gist_body))
+                    // .expect("Could not build that request.");
+                
+                    // post_game();
+                    // let gist_body = json!({
+                    //     "game_type": "Connect-4",
+                    //     "p1_name": "Zarif",
+                    //     "p2_name": "Computer",
+                    //     "is_draw": false,
+                    //     "winner_name": "Computer",
+                    //     "difficulty": "Hard",
+                    //     "date_time": "2022-04-06T05:00:00.00Z"
+                    // });
+                    // let request_url = "http://127.0.0.1:5000/gameresults";
+
+                    // let response = Client::new()
+                    // .post(request_url)
+                    // .json(&gist_body)
+                    // .send().await;
+
+                    // log::info!("Created {:?}", gist);
+                    // println!("Created {:?}", gist);
+                    
                     self.winner = 0;
                     self.game = Rc::new(RefCell::new(Game::new(6, 7, self.difficulty, true, &self.player1, &"Computer".to_string())));
                     let canvas: CanvasElement = document()
@@ -444,4 +550,114 @@ impl Component for TOOTComputer {
             </div>
         }
     }
+}
+async fn req() -> String{
+    use reqwest::header::CONTENT_TYPE;
+    use reqwest::header::ACCEPT;
+    use reqwest::header::AUTHORIZATION;
+    use reqwest::RequestBuilder;
+    // use reqwest::Client;
+    let gist_body = json!({
+        "game_type": "Connect-4",
+        "p1_name": "John",
+        "p2_name": "Computer",
+        "is_draw": false,
+        "winner_name": "Computer",
+        "difficulty": "Hard",
+        "date_time": "2022-04-06T05:00:00.00Z"
+    });
+    let request_url = "http://127.0.0.1:5000/gameresults";
+    let client = reqwest::Client::new();
+    // let resp = client
+    // .post(request_url)
+    // .header(CONTENT_TYPE, "application/json")
+    // .json(&gist_body)
+    // .send()
+    // .await
+    // .unwrap();
+
+    let resp = client.
+    get("http://localhost:5000/gameresults").
+    fetch_mode_no_cors().
+    // json(&gist_body).
+    // header(ACCEPT, "application/json").
+    // header(CONTENT_TYPE, "application/json").
+    send().await.unwrap().text().await;
+    // let resp = reqwest::get("http://127.0.0.1:5000/gameresults")
+    // .await;
+    log::info!("body = {:#?}", resp);
+    // link.send_self(Msg::record());
+    return resp.unwrap();
+}
+
+fn post_game() -> Result<(), Box<dyn std::error::Error>>{
+    use reqwest::header::CONTENT_TYPE;
+    use reqwest::header::ACCEPT;
+    use reqwest::header::AUTHORIZATION;
+    // use reqwest::Client;
+    let gist_body = json!({
+        "game_type": "Connect-4",
+        "p1_name": "John",
+        "p2_name": "Computer",
+        "is_draw": false,
+        "winner_name": "Computer",
+        "difficulty": "Hard",
+        "date_time": "2022-04-06T05:00:00.00Z"
+    });
+    let request_url = "http://127.0.0.1:5000/gameresults";
+
+    let url = format!(
+        "https://api.spotify.com/v1/search?q={query}&type=track,artist",
+        // go check out her latest album. It's 🔥
+        query = "Little Simz"
+    );
+
+    // let client = reqwest::blocking::Client::new();
+    // let response = client
+    // .post(request_url)
+    // .header(CONTENT_TYPE, "application/json")
+    // .json(&gist_body);
+    // .send()
+    // .await
+    // .unwrap();
+
+    // let response = reqwest::get("http://127.0.0.1:5000/gameresults?winner_name=Computer")
+    // .await?
+    // .json::<HashMap<String, String>>()
+    // .await?;
+    // use reqwasm::http::Request;
+
+
+
+
+    // let resp = reqwest::blocking::get("http://127.0.0.1:5000/gameresults")?;
+
+    // let client = reqwest::blocking::Client::new();
+    // let response = client
+    // .get(url)
+    // .header(AUTHORIZATION, "Bearer [AUTH_TOKEN]")
+    // .header(CONTENT_TYPE, "application/json")
+    // .header(ACCEPT, "application/json")
+    // .send()
+    // .await
+    // .unwrap();
+
+
+    // match response.status() {
+    //     reqwest::StatusCode::OK => {
+    //         // on success, parse our JSON to an APIResponse
+    //         match response.json::<i32>().await {
+    //             Ok(parsed) => println!("Success! {:?}", parsed),
+    //             Err(_) => println!("Hm, the response didn't match the shape we expected."),
+    //         };
+    //     }
+    //     reqwest::StatusCode::UNAUTHORIZED => {
+    //         println!("Need to grab a new token");
+    //     }
+    //     other => {
+    //         panic!("Uh oh! Something unexpected happened: {:?}", other);
+    //     }
+    // };
+    // log::info!("body = {:#?}", resp);
+    Ok(())
 }
