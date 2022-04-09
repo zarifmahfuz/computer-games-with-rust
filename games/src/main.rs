@@ -57,7 +57,7 @@ fn run_connect4() {
 fn run_toot_and_otto() {
     let rows = 6;
     let cols = 7;
-    let max_search_depth = 4;
+    let max_search_depth = 5;
     let mut game = TootAndOttoState::new(rows, cols, max_search_depth, true, &"Zarif".to_string(), &"Computer".to_string());
     let mut winner = game.check_winner();
     game.print_state();

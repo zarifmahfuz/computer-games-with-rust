@@ -51,3 +51,10 @@ rows = 6, cols = 7
 search depth = 5
 user plays moves: 4,2,5,3,3,0,0,4
 expected output = Computer Wins
+
+
+TootAndOtto
+test case 1
+rows = 6, cols = 7
+search_depth = 4
+user plays moves:

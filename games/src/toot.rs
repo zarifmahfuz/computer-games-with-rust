@@ -149,6 +149,9 @@ impl TootAndOttoState {
         let mut bottom_right = [0; 4];
         let mut top_right = [0; 4];
 
+        let mut max_wins: i32 = 0;
+        let mut min_wins: i32 = 0;
+
         for i in 0..self.rows {
             for j in 0..self.cols {
                 for ele in 0..4 {
@@ -179,42 +182,51 @@ impl TootAndOttoState {
                 }
                 
                 if right[0] == 1 && right[1] == -1 && right[2] == -1 && right[3] == 1 {
-                    return self.min;
+                    min_wins += 1;
                 } else if right[0] == -1 && right[1] == 1 && right[2] == 1 && right[3] == -1 {
-                    return self.max;
+                    max_wins += 1;
                 } else if bottom[0] == 1 && bottom[1] == -1 && bottom[2] == -1 && bottom[3] == 1 {
-                    return self.min;
+                    min_wins += 1;
                 } else if bottom[0] == -1 && bottom[1] == 1 && bottom[2] == 1 && bottom[3] == -1 {
-                    return self.max;
+                    max_wins += 1;
                 } else if bottom_right[0] == 1
                     && bottom_right[1] == -1
                     && bottom_right[2] == -1
                     && bottom_right[3] == 1
                 {
-                    return self.min;
+                    min_wins += 1;
                 } else if bottom_right[0] == -1
                     && bottom_right[1] == 1
                     && bottom_right[2] == 1
                     && bottom_right[3] == -1
                 {
-                    return self.max;
+                    max_wins += 1;
                 } else if top_right[0] == 1
                     && top_right[1] == -1
                     && top_right[2] == -1
                     && top_right[3] == 1
                 {
-                    return self.min;
+                    min_wins += 1;
                 } else if top_right[0] == -1
                     && top_right[1] == 1
                     && top_right[2] == 1
                     && top_right[3] == -1
                 {
-                    return self.max;
+                    max_wins += 1;
                 }
             }
         }
-        // no winner
-        return 0;
+        if max_wins == 0 && min_wins == 0 {
+            // no winner
+            return 0;
+        } else if max_wins > min_wins {
+            return self.max;
+        } else if max_wins < min_wins {
+            return self.min;
+        } else {
+            // it's a draw! e.g OTTOOT
+            return 2;
+        }
     }
 
     pub fn print_state(&self) {
