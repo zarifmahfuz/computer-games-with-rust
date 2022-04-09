@@ -22,9 +22,13 @@ use serde_json::json;
 use reqwest::Client;
 // use tokio::task;
 
-use wasm_bindgen_futures::futures_0_3::spawn_local;
+// use wasm_bindgen_futures::futures_0_3::spawn_local;
+use wasm_bindgen_futures::spawn_local;
 
-
+use web_sys::{Request, RequestInit, RequestMode, Response};
+use wasm_bindgen_futures::JsFuture;
+use wasm_bindgen::JsCast;
+use wasm_bindgen::JsValue;
 // sue web_sys::Request;
 // use std::env;
 // use reqwest::Client;
@@ -551,7 +555,19 @@ impl Component for TOOTComputer {
         }
     }
 }
-async fn req() -> String{
+use serde::Serialize;
+#[derive(Debug, Serialize, Deserialize)]
+pub struct Branch {
+    pub _id: String,
+    pub game_type: String,
+    pub p1_name: String,
+    pub p2_name: String,
+    pub is_draw: bool,
+    pub winner_name: String,
+    pub difficulty: String,
+    pub date_time: String,
+}
+async fn req() -> Result<JsValue, JsValue>{
     use reqwest::header::CONTENT_TYPE;
     use reqwest::header::ACCEPT;
     use reqwest::header::AUTHORIZATION;
@@ -576,18 +592,59 @@ async fn req() -> String{
     // .await
     // .unwrap();
 
-    let resp = client.
-    get("http://localhost:5000/gameresults").
-    fetch_mode_no_cors().
-    // json(&gist_body).
-    // header(ACCEPT, "application/json").
-    // header(CONTENT_TYPE, "application/json").
-    send().await.unwrap().text().await;
-    // let resp = reqwest::get("http://127.0.0.1:5000/gameresults")
-    // .await;
-    log::info!("body = {:#?}", resp);
-    // link.send_self(Msg::record());
-    return resp.unwrap();
+    // let resp = client.
+    // get("http://localhost:5000/gameresults").
+    // fetch_mode_no_cors().
+    // // json(&gist_body).
+    // // header(ACCEPT, "application/json").
+    // // header(CONTENT_TYPE, "application/json").
+    // send().await.unwrap().text().await;
+    // // let resp = reqwest::get("http://127.0.0.1:5000/gameresults")
+    // // .await;
+    // log::info!("body = {:#?}", resp);
+    // // link.send_self(Msg::record());
+    // return resp.unwrap();
+
+
+    // use web_sys::{Request, RequestInit, RequestMode, Response};
+    // use wasm_bindgen_futures::JsFuture;
+    // use wasm_bindgen::JsCast;
+    let mut opts = RequestInit::new();
+    opts.method("GET");
+    opts.mode(RequestMode::NoCors);
+
+    let url = "http://127.0.0.1:5000/gameresults";
+
+    let request = Request::new_with_str_and_init(&url, &opts)?;
+    request
+        .headers()
+        .set("Accept", "application/json")?;
+
+    let window = web_sys::window().unwrap();
+    // let resp_value = window.fetch_with_request(&request.unwrap());
+    let resp_value = JsFuture::from(window.fetch_with_request(&request)).await?;
+    log::info!("body = {:#?}", &resp_value);
+    // log::info!("body = {:#?}", &resp_value.unwrap().as_string());
+
+    // assert!(resp_value.is_instance_of::<Response>());
+    let resp: Response = resp_value.dyn_into().unwrap();
+
+    log::info!("body = {:#?}", &resp);
+    let json = JsFuture::from(resp.json()?).await?;
+    log::info!("body = {:#?}", &json);
+
+    let branch_info: Branch = json.into_serde().unwrap();
+    log::info!("body = {:#?}", &branch_info);
+
+    // let branch_info = json.unwrap().into_serde().unwrap();
+
+    // let resp = Request::get("http://localhost:5000/gameresults")
+    // .send()
+    // .await
+    // .unwrap();
+
+    // log::info!("body = {:#?}", resp_value);
+    Ok(JsValue::from_serde(&branch_info).unwrap())
 }
 
 fn post_game() -> Result<(), Box<dyn std::error::Error>>{

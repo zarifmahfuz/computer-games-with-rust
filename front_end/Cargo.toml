@@ -13,15 +13,31 @@ rand = "0.7.0-pre.1"
 wbg-rand = "0.4"
 wasm-logger = "0.2.0"
 log = "0.4.6"
-wasm-bindgen = "0.2.79"
-serde = "1.0.136"
+wasm-bindgen = { version = "0.2.80", features = ["serde-serialize"]  }
+serde = { version = "1.0.80", features = ["derive"] }
+serde_derive = "^1.0.59"
 serde_json = "1.0.79"
 reqwest = { version = "0.11", features = ["blocking","json"] }
 # tokio = { version = "1", features = ["full"] }
 requests = { path = "../requests" }
-wasm-bindgen-futures = { version = "0.3.20", features = ["futures_0_3"] }
+# wasm-bindgen-futures = { version = "0.4.30", features = ["futures_0_3"] }
+wasm-bindgen-futures = "0.4.30"
 # tokio = "1.17.0"
 futures = "0.3.21"
+reqwasm = "0.5.0"
+# web-sys = "0.3.57"
+js-sys = "0.3.57"
 
 [patch.crates-io]
 stdweb = { git = 'https://github.com/arturoc/stdweb.git' }
+
+[dependencies.web-sys]
+version = "0.3.4"
+features = [
+  'Headers',
+  'Request',
+  'RequestInit',
+  'RequestMode',
+  'Response',
+  'Window',
+]

@@ -3,9 +3,6 @@ use yew::prelude::*;
 use yew_router::prelude::*;
 use yew::html::Scope;
 
-#[macro_use]
-extern crate requests;
-
 mod pages;
 use pages::{
             welcome::WelcomeModel,
@@ -16,7 +13,8 @@ use pages::{
             toothuman::TOOTHuman,
             scoreboard::ScoreBoard,
             score::Score,
-            howc4::HowToConnect4};
+            howc4::HowToConnect4,
+        };
 
 #[derive(Clone, Routable, PartialEq)]
 pub enum Route {
