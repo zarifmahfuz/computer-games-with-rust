@@ -10,7 +10,7 @@ use std::io::Write;
 fn run_connect4() {
     let rows = 6;
     let cols = 7;
-    let max_search_depth = 5;
+    let max_search_depth = 2;
     let mut game = Connect4State::new(rows, cols, max_search_depth, true, &"Zarif".to_string(), &"Computer".to_string());
     let mut winner = game.check_winner();
     game.print_state();
@@ -111,4 +111,5 @@ fn run_toot_and_otto() {
 
 fn main() {
     run_toot_and_otto();
+    // run_connect4();
 }
