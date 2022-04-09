@@ -4,7 +4,7 @@ use reqwasm::http::Request;
 
 #[derive(Clone, PartialEq, Deserialize)]
 struct GameResult {
-    _id: String,
+    _id: i64,
     game_type: String,
     p1_name: String,
     p2_name: String,
