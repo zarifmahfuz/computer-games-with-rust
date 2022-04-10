@@ -1,4 +1,3 @@
-use requests::request;
 use games::toot::TootAndOttoState;
 use yew::prelude::*;
 use std::cell::RefCell;
@@ -13,7 +12,6 @@ use std::collections::HashMap;
 
 use serde::Deserialize;
 use serde_json::json;
-use reqwest::Client;
 
 use wasm_bindgen_futures::spawn_local;
 
@@ -22,7 +20,6 @@ use wasm_bindgen_futures::JsFuture;
 use wasm_bindgen::JsCast;
 use wasm_bindgen::JsValue;
 
-use chrono::Local;
 use instant::Instant;
 
 // https://stackoverflow.com/questions/57547849/rust-adding-event-listeners-to-a-webassembly-game
@@ -134,6 +131,7 @@ fn test_draw(game: Rc<RefCell<TootAndOttoState>>, col: usize, TO: i32) {
             false,
         );
         context.fill(FillRule::NonZero);
+        // context.set_font("bold 25px serif");
     
         context.restore();
         let mut text = "T";
@@ -574,10 +572,6 @@ pub struct Branch {
     pub date_time: String,
 }
 async fn req(p1: String, p2: String, draw: bool, winner: String, difficulty: String, date_time: String){
-    use reqwest::header::CONTENT_TYPE;
-    use reqwest::header::ACCEPT;
-    use reqwest::header::AUTHORIZATION;
-    use reqwest::RequestBuilder;
 
     let game_type = "TootAndOtto".to_string();
     let p1_name = p1;

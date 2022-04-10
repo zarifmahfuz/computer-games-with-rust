@@ -1,4 +1,3 @@
-use requests::request;
 use games::toot::TootAndOttoState;
 use yew::prelude::*;
 use std::cell::RefCell;
@@ -12,7 +11,6 @@ use stdweb::web::{document, window, CanvasRenderingContext2d, FillRule};
 use std::collections::HashMap;
 use serde::Deserialize;
 use serde_json::json;
-use reqwest::Client;
 use wasm_bindgen_futures::spawn_local;
 
 use web_sys::{Request, RequestInit, RequestMode, Response};
@@ -20,7 +18,6 @@ use wasm_bindgen_futures::JsFuture;
 use wasm_bindgen::JsCast;
 use wasm_bindgen::JsValue;
 
-use chrono::Local;
 use instant::Instant;
 
 macro_rules! enclose {
@@ -56,6 +53,7 @@ pub struct TOOTComputer {
     is_draw: bool,
     col: usize,
     row: usize,
+    calculating: bool,
 }
 
 // draw the background for you
@@ -91,6 +89,8 @@ fn background(game: Rc<RefCell<TootAndOttoState>>) {
     context.fill(FillRule::NonZero);
     context.restore();
 }
+
+
 // for player1 draw
 fn test_draw(game: Rc<RefCell<TootAndOttoState>>, col: usize, TO: i32) {
 
@@ -261,6 +261,7 @@ impl Component for TOOTComputer {
             is_draw: false,
             col:7,
             row:6,
+            calculating: false,
         }
     }
 
@@ -297,8 +298,8 @@ impl Component for TOOTComputer {
                     .unwrap();
 
                 self.difficulty = match difficulty_selector.value().unwrap().as_str() {
-                    "easy" => 2,
-                    "medium" => 4,
+                    "easy" => 1,
+                    "medium" => 2,
                     "hard" => 5,
                     _ => 1,
                 };
@@ -447,7 +448,7 @@ impl Component for TOOTComputer {
                         _ => 1,
                     };
                     log::info!("TO is {}", self.TO);
-                    if col.is_some() {
+                    if col.is_some() && !self.calculating{
                         let temp_col = col.unwrap() as usize;
                         let temp = self.game.clone().borrow_mut().player_1_move(temp_col, self.TO);
                         if temp.0 == -1 {
@@ -644,6 +645,7 @@ impl Component for TOOTComputer {
                                 });
                             }
                         }
+                        self.calculating == false;
                     }
                 }
                 else {
@@ -747,10 +749,6 @@ pub struct Branch {
     pub date_time: String,
 }
 async fn req(p1: String, p2: String, draw: bool, winner: String, difficulty: String, date_time: String){
-    use reqwest::header::CONTENT_TYPE;
-    use reqwest::header::ACCEPT;
-    use reqwest::header::AUTHORIZATION;
-    use reqwest::RequestBuilder;
 
     let game_type = "TootAndOtto".to_string();
     let p1_name = p1;
