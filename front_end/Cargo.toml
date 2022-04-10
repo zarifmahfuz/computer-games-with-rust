@@ -10,7 +10,7 @@ yew = "0.19"
 yew-router = "0.16"
 stdweb = "0.4.7"
 rand = "0.7.0-pre.1"
-wbg-rand = "0.4"
+# wbg-rand = "0.4"
 wasm-logger = "0.2.0"
 log = "0.4.6"
 wasm-bindgen = { version = "0.2.80", features = ["serde-serialize"]  }
