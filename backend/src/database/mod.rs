@@ -28,17 +28,16 @@ impl MongoDB {
             .limit(1)
             .build();
         let mut cursor = collection.find(None, find_options).await?;
-        let mut highest_id: i64 = 0;
+        let mut highest_id: String = String::from("0");
         while let Some(doc) = cursor.try_next().await? {
-            // println!("doc: {:#?}", doc);
             highest_id = doc._id.unwrap();
             break;
         }
-        // let highest_id: i64 = highest_id.parse::<i64>().unwrap();
+        let highest_id: i64 = highest_id.parse::<i64>().unwrap();
         let next_id = highest_id + 1;
         println!("Next ID: {}", next_id);
 
-        game_result._id = Some(next_id);
+        game_result._id = Some(next_id.to_string());
         let insert: InsertOneResult = collection.insert_one(game_result, None).await?;
         Ok(insert.inserted_id.to_string())
     }
