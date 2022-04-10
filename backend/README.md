@@ -20,17 +20,17 @@ The API server is running on port 5000. If you want to change that, please edit 
 ### API Endpoints
 | Resource                  | POST                    |     GET     |  DELETE |
 | ----------------------------------- |:-------------:| :-----:| :-----:|
-| /gameresults              | Creates a new game result | Retrieves all game results     | Deletes all game results |
-| /gameresults?winner_name | - | Retrieves all game results for a particular winner     | - |
-| /leaderboard              | - | Retrieves the leaderboard for all difficulties          | - |
-| /leaderboard?difficulty | - | Retrieves the leaderboard for a particular difficulty level     | - |
+| /api/gameresults              | Creates a new game result | Retrieves all game results     | Deletes all game results |
+| /api/gameresults?winner_name | - | Retrieves all game results for a particular winner     | - |
+| /api/leaderboard              | - | Retrieves the leaderboard for all difficulties          | - |
+| /api/leaderboard?difficulty | - | Retrieves the leaderboard for a particular difficulty level     | - |
 
 ### Examples
 
 #### Create a new game result
 
 ```
-curl -X POST -H "Content-Type: application/json" http://127.0.0.1:5000/gameresults -d '{
+curl -X POST -H "Content-Type: application/json" http://127.0.0.1:5000/api/gameresults -d '{
     "game_type": "Connect-4",
     "p1_name": "Zarif",
     "p2_name": "Computer",
@@ -55,7 +55,7 @@ Response:
 #### Retrieve all game results for a particular winner
 
 ```
-curl -X GET "http://127.0.0.1:5000/gameresults?winner_name=Zarif"
+curl -X GET "http://127.0.0.1:5000/api/gameresults?winner_name=Zarif"
 ```
 
 Response:
@@ -66,7 +66,7 @@ Response:
 #### Retrieve the leaderboard for all difficulty levels
 
 ```
-curl -X GET "http://127.0.0.1:5000/leaderboard"
+curl -X GET "http://127.0.0.1:5000/api/leaderboard"
 ```
 
 Response:
@@ -77,7 +77,7 @@ Response:
 #### Retrieve the leaderboard for a particular difficulty level
 
 ```
-curl -X GET "http://127.0.0.1:5000/leaderboard?difficulty=Medium"
+curl -X GET "http://127.0.0.1:5000/api/leaderboard?difficulty=Medium"
 ```
 
 Response:

@@ -4,6 +4,7 @@ use yew::prelude::*;
 use wasm_bindgen::JsCast;
 use std::convert::TryInto;
 
+
 pub struct Connect4Computer {
     game_started: bool,
     player_1_name: String,
@@ -309,6 +310,7 @@ impl Component for Connect4Computer {
             Connect4ComputerMsg::StartGame => {
                 self.game_started = true;
 
+// <<<<<<< HEAD
                 let document = web_sys::window().unwrap().document().unwrap();
 
                 // get the selected board size
@@ -326,7 +328,6 @@ impl Component for Connect4Computer {
                     "8x8" => self.board_size = (8,8),
                     _ => println!("something else!"),
                 }
-                // web_sys::console::log_2(&self.board_size.clone().0.into(), &self.board_size.clone().1.into());
             },
         }
         true

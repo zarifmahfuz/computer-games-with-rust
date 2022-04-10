@@ -1,9 +1,6 @@
 use requests::request;
+use games::toot::TootAndOttoState;
 use yew::prelude::*;
-// use yew::{html, Html, ChangeData};
-// use yew::components::Select;
-// use yew::html::InputData;
-// use yew::events::ClickEvent;
 use std::cell::RefCell;
 use std::f64::consts::PI;
 use std::rc::Rc;
@@ -12,45 +9,17 @@ use stdweb::unstable::TryInto;
 use stdweb::web::event::{ClickEvent, ResizeEvent};
 use stdweb::web::html_element::{CanvasElement, SelectElement};
 use stdweb::web::{document, window, CanvasRenderingContext2d, FillRule};
-// use web_sys::Document;
-use crate::pages::toot::*;
 use std::collections::HashMap;
-
-// use error_chain::error_chain;
 use serde::Deserialize;
 use serde_json::json;
 use reqwest::Client;
-// use tokio::task;
-
-// use wasm_bindgen_futures::futures_0_3::spawn_local;
 use wasm_bindgen_futures::spawn_local;
 
 use web_sys::{Request, RequestInit, RequestMode, Response};
 use wasm_bindgen_futures::JsFuture;
 use wasm_bindgen::JsCast;
 use wasm_bindgen::JsValue;
-// sue web_sys::Request;
-// use std::env;
-// use reqwest::Client;
-// use yew::format::Nothing;
-// use yew::format::Json;
-// use yew::services::fetch::Request;
 
-// use yew::{
-//     format::{Json, Nothing},
-//     prelude::*,
-//     services::fetch::{FetchService, FetchTask, Request, Response},
-// };
-
-
-// error_chain! {
-//     foreign_links {
-//         EnvVar(env::VarError);
-//         HttpRequest(reqwest::Error);
-//     }
-// }
-// https://stackoverflow.com/questions/57547849/rust-adding-event-listeners-to-a-webassembly-game
-// This reference teach you how to implement this macro rulle and how to add listener to a canvas.
 macro_rules! enclose {
     ( ($( $x:ident ),*) $y:expr ) => {
         {
@@ -79,12 +48,15 @@ pub struct TOOTComputer {
     // false => end
     start_or_end: bool,
     new_select_col: usize,
-    game: Rc<RefCell<Game>>,
+    game: Rc<RefCell<TootAndOttoState>>,
     winner: i32,
+    is_draw: bool,
+    col: usize,
+    row: usize,
 }
 
 // draw the background for you
-fn background(game: Rc<RefCell<Game>>) {
+fn background(game: Rc<RefCell<TootAndOttoState>>) {
     let canvas: CanvasElement = document()
         .query_selector("#background")
         .unwrap()
@@ -116,8 +88,8 @@ fn background(game: Rc<RefCell<Game>>) {
     context.fill(FillRule::NonZero);
     context.restore();
 }
-// for player draw
-fn test_draw(game: Rc<RefCell<Game>>, col: usize, TO: i32) {
+// for player1 draw
+fn test_draw(game: Rc<RefCell<TootAndOttoState>>, col: usize, TO: i32) {
 
     let canvas: CanvasElement = document()
         .query_selector("#background")
@@ -127,7 +99,6 @@ fn test_draw(game: Rc<RefCell<Game>>, col: usize, TO: i32) {
         .unwrap();
 
     let context: CanvasRenderingContext2d = canvas.get_context().unwrap();
-    // log::info!("im here {}", col);
     context.save();
     context.set_fill_style_color("#ff0051");
     context.begin_path();
@@ -152,23 +123,24 @@ fn test_draw(game: Rc<RefCell<Game>>, col: usize, TO: i32) {
             false,
         );
         context.fill(FillRule::NonZero);
+    
+        context.restore();
+        let mut text = "T";
+        if TO == 1 {
+            text = "T";
+        }
+        else if TO == -1{
+            text = "O";
+        }
+        context.set_font("bold 25px serif");
+        // context.fill_text(text, ((col as f64)- 8.5) as f64, ((row as f64) + 8.0) as f64, None);
+        context.fill_text(text, (75 * col + 100 -9) as f64, (75 * row + 50 + 8) as f64, None);
+        context.restore();
     }
-    context.restore();
-    let mut text = "T";
-    if TO == 0 {
-        text = "T";
-    }
-    else if TO == 1{
-        text = "O";
-    }
-    context.set_font("bold 25px serif");
-    // context.fill_text(text, ((col as f64)- 8.5) as f64, ((row as f64) + 8.0) as f64, None);
-    context.fill_text(text, (75 * col + 100 -9) as f64, (75 * row + 50 + 8) as f64, None);
-    context.restore();
 
 }
-
-fn winner_draw(game: Rc<RefCell<Game>>, winner: i32) {
+// draw after we have a winner
+fn winner_draw(game: Rc<RefCell<TootAndOttoState>>, winner: i32) {
     let canvas: CanvasElement = document().query_selector("#background")
     .unwrap().unwrap().try_into().unwrap();
 
@@ -187,6 +159,9 @@ fn winner_draw(game: Rc<RefCell<Game>>, winner: i32) {
     else if winner == 1 {
         text = "Computer won, click to restart.";
     }
+    else if winner == 2 {
+        text = "Game is draw";
+    }
     context.fill_text(text, (75+100) as f64, (75) as f64, None);
     context.restore();
 
@@ -194,7 +169,7 @@ fn winner_draw(game: Rc<RefCell<Game>>, winner: i32) {
 
 
 // for computer draw
-fn computer_draw(game: Rc<RefCell<Game>>, col: usize, TO: i32) {
+fn computer_draw(game: Rc<RefCell<TootAndOttoState>>, col: usize, TO: i32) {
     let canvas: CanvasElement = document().query_selector("#background")
     .unwrap().unwrap().try_into().unwrap();
 
@@ -212,7 +187,6 @@ fn computer_draw(game: Rc<RefCell<Game>>, col: usize, TO: i32) {
         _ => println!("Don't have this col"),
     }
     row = row+1;
-    // row = 6-row;
     let rows = game.clone().borrow().rows;
     if row <=rows {
         game.borrow_mut().h_map.insert(col,row);
@@ -226,18 +200,18 @@ fn computer_draw(game: Rc<RefCell<Game>>, col: usize, TO: i32) {
             false,
         );
         context.fill(FillRule::NonZero);
+    
+        context.restore();
+        let mut text = "T";
+        if TO == 1 {
+            text = "T";
+        }
+        else if TO == -1{
+            text = "O";
+        }
+        context.set_font("bold 25px serif");
+        context.fill_text(text, (75 * col + 100 -9) as f64, (75 * row + 50 + 8) as f64, None);
     }
-    context.restore();
-    let mut text = "T";
-    if TO == 0 {
-        text = "T";
-    }
-    else if TO == 1{
-        text = "O";
-    }
-    // context.fill_text(text, ((col as f64)- 8.5) as f64, ((row as f64) + 8.0) as f64, None);
-    context.set_font("bold 25px serif");
-    context.fill_text(text, (75 * col + 100 -9) as f64, (75 * row + 50 + 8) as f64, None);
 
 }
 
@@ -263,7 +237,7 @@ impl Component for TOOTComputer {
         let cols = 7;
         let max_search_depth = 3;
 
-        let game = Rc::new(RefCell::new(Game::new(rows, cols, max_search_depth, true, &"".to_string(), &"Computer".to_string())));
+        let game = Rc::new(RefCell::new(TootAndOttoState::new(rows, cols, max_search_depth, true, &"".to_string(), &"Computer".to_string())));
 
         TOOTComputer {
             player1: "".to_string(),
@@ -279,6 +253,9 @@ impl Component for TOOTComputer {
             new_select_col: 0,
             game: game.clone(),
             winner: 0,
+            is_draw: false,
+            col:7,
+            row:6,
         }
     }
 
@@ -295,9 +272,6 @@ impl Component for TOOTComputer {
             Msg::setDifficulty(val) => {self.difficulty = 1;}
             Msg::setTO(val) => {self.TO = 1;}
             Msg::StartGame => {
-                // js! {
-                //     console.log("Something");
-                // }
                 self.start_or_end = true;
 
 
@@ -309,17 +283,30 @@ impl Component for TOOTComputer {
                     .unwrap();
 
                 self.difficulty = match difficulty_selector.value().unwrap().as_str() {
-                    "easy" => 1,
-                    "medium" => 2,
-                    "hard" => 3,
+                    "easy" => 2,
+                    "medium" => 4,
+                    "hard" => 5,
                     _ => 1,
+                };
+
+                let difficulty_selector: SelectElement = document()
+                .query_selector("#board_size")
+                .unwrap()
+                .unwrap()
+                .try_into()
+                .unwrap();
+
+                match difficulty_selector.value().unwrap().as_str() {
+                    "7x6" => {self.col = 7; self.row = 6;},
+                    "7x7" => {self.col = 7; self.row = 7;},
+                    "6x4" => {self.col = 6; self.row = 4;},
+                _ => {self.col = 7; self.row = 6;},
                 };
 
 
 
-                self.game = Rc::new(RefCell::new(Game::new(6, 7, self.difficulty, true, &self.player1, &"Computer".to_string())));
+                self.game = Rc::new(RefCell::new(TootAndOttoState::new(self.row, self.col, self.difficulty, true, &self.player1, &"Computer".to_string())));
 
-                //////
                 let canvas: CanvasElement = document()
                     .query_selector("#background")
                     .unwrap()
@@ -338,7 +325,6 @@ impl Component for TOOTComputer {
                     let colss = game_clone.clone().borrow().cols;
                     for col in 0..colss {
                         let x_col = 75 * col as i32 + 100;
-                            // log::info!("col is {}", col);
                             if (x_click - x_col) * (x_click - x_col) <= 25 * 25 {
                                 link.send_message(Msg::clicked(Some(col as usize)));
                                 return;
@@ -348,39 +334,13 @@ impl Component for TOOTComputer {
                 }));
 
                 background(self.game.clone());
-                // while(true){};
             }
             Msg::EndGame => {self.start_or_end = false;}
 
             Msg::record() => {
-                spawn_local(async move{
-                    let resp = req().await;
-                    log::info!("body = {:#?}", resp);
-                });
-
-                // use futures::prelude::*;
-
-                // futures::stream::iter(0..1)
-                //     .for_each(|c| async move {
-                //         let resp = req().await;
-                //         log::info!("body = {:#?}", resp);
-                //     });
-
-                // let callback = _ctx.link().callback(async move{
-                //     let resp = req().await;
-                //     log::info!("body = {:#?}", resp);
-                // });
-
-                // async move {
-                //     let resp = req().await;
-                //     log::info!("body = {:#?}", resp);
-                // };
 
             }
             Msg::clicked(col) => {
-                let link = _ctx.link().clone();
-                link.send_message(Msg::record());
-                // let result = post_game();
 
                 if self.winner == 0{
                     let sel_box: SelectElement = document()
@@ -391,80 +351,84 @@ impl Component for TOOTComputer {
                         .unwrap();
                 
                     self.TO = match sel_box.value().unwrap().as_str() {
-                        "T" => 0,
-                        "O" => 1,
+                        "T" => 1,
+                        "O" => -1,
                         _ => 1,
                     };
+                    log::info!("TO is {}", self.TO);
                     if col.is_some() {
                         let temp_col = col.unwrap() as usize;
-                        self.new_select_col = temp_col;
-                        test_draw(self.game.clone(), temp_col, self.TO);
-                        self.game.clone().borrow_mut().player_1_move(temp_col, self.TO);
-                        self.winner = self.game.clone().borrow().check_winner();
-                        if self.winner == -1 {
-                            // log::info!("player win");
-                            winner_draw(self.game.clone(), self.winner);
+                        let temp = self.game.clone().borrow_mut().player_1_move(temp_col, self.TO);
+                        if temp.0 == -1 {
+                            log::info!("column full");
                         }
-                        else if self.winner == 0 {
-                            let (row_to_move, col_to_move, TO_flag) = self.game.clone().borrow_mut().player_2_move(0);
-                            log::info!("TO falg is {} in canvas",TO_flag);
-                            computer_draw(self.game.clone(), col_to_move as usize, TO_flag);
+                        else {
+                            test_draw(self.game.clone(), temp_col, self.TO);
                             self.winner = self.game.clone().borrow().check_winner();
-                            if self.winner == 1 {
-                                // log::info!("computer win");
+                            if self.winner == -1 {
+                                winner_draw(self.game.clone(), self.winner);
+                            }
+                            else if self.winner == 1 {
+                                winner_draw(self.game.clone(), self.winner);
+                            }
+                            else if self.winner == 0 {
+                                let (row_to_move, col_to_move, TO_flag) = self.game.clone().borrow_mut().player_2_move(0,1);
+                                log::info!("TO falg is {} in canvas",TO_flag);
+                                computer_draw(self.game.clone(), col_to_move as usize, TO_flag);
+                                self.winner = self.game.clone().borrow().check_winner();
+                                if self.winner == 1 {
+                                    winner_draw(self.game.clone(), self.winner);
+                                }
+                                else if self.winner == 2{
+                                    self.is_draw = true;
+                                    winner_draw(self.game.clone(), self.winner);
+                                }
+                            }
+                            else if self.winner == 2{
+                                self.is_draw = true;
+                                log::info!("draw {} in canvas1",self.is_draw);
                                 winner_draw(self.game.clone(), self.winner);
                             }
                         }
                     }
                 }
                 else {
-                    // post_game();
-                    // let gist_body = json!({
-                    //     "game_type": "Connect-4",
-                    //     "p1_name": "John",
-                    //     "p2_name": "Computer",
-                    //     "is_draw": false,
-                    //     "winner_name": "Computer",
-                    //     "difficulty": "Hard",
-                    //     "date_time": "2022-04-06T05:00:00.00Z"
-                    // });
-                    // let request_url = "http://127.0.0.1:5000/gameresults";
+                    log::info!("draw {} in canvas2",self.is_draw);
+                    use chrono::Local;
+                    use instant::Instant;
+                    let p1 = self.player1.clone();
+                    let p2 = self.player2.clone();
+                    let draw = self.is_draw.clone();
+                    let mut winner = self.player1.clone();
+                    let w_id = self.winner.clone();
+                    if w_id == -1 {
+                        winner = self.player1.clone();
+                    }
+                    else if w_id == 1{
+                        winner = self.player2.clone();
+                    }
+                    else if w_id == 2{
+                        winner = "".to_string();
+                    }
+                    let mut diff = "Hard".to_string();
+                    if self.difficulty == 2 {
+                        diff = "Easy".to_string();
+                    }
+                    else if self.difficulty == 4 {
+                        diff = "Medium".to_string();
+                    }
+                    else if self.difficulty == 5 {
+                        diff = "Hard".to_string();
+                    }
+                    let now = js_sys::Date::new_0();
+                    let date: String = now.to_iso_string().into();
+    
+                    spawn_local(async move{
+                        let resp = req(p1, p2, draw, winner, diff, date).await;
+                        log::info!("body = {:#?}", resp);
+                    });
 
-                    // let request = new Request('/myEndpoint', {
-                    //     method: 'POST',
-                    //     body: JSON.stringify(obj)
-                    //    });
-                    // // let response = reqwest::Client::new().post(request_url)
-                    // // .json(&gist_body)
-                    // // .send().await;
-                
-                    // let post_request = Request::post("http://127.0.0.1:5000/gameresults")
-                    // .header("Content-Type", "application/json")
-                    // .body(Json(&gist_body))
-                    // .expect("Could not build that request.");
-                
-                    // post_game();
-                    // let gist_body = json!({
-                    //     "game_type": "Connect-4",
-                    //     "p1_name": "Zarif",
-                    //     "p2_name": "Computer",
-                    //     "is_draw": false,
-                    //     "winner_name": "Computer",
-                    //     "difficulty": "Hard",
-                    //     "date_time": "2022-04-06T05:00:00.00Z"
-                    // });
-                    // let request_url = "http://127.0.0.1:5000/gameresults";
-
-                    // let response = Client::new()
-                    // .post(request_url)
-                    // .json(&gist_body)
-                    // .send().await;
-
-                    // log::info!("Created {:?}", gist);
-                    // println!("Created {:?}", gist);
-                    
-                    self.winner = 0;
-                    self.game = Rc::new(RefCell::new(Game::new(6, 7, self.difficulty, true, &self.player1, &"Computer".to_string())));
+                    self.game = Rc::new(RefCell::new(TootAndOttoState::new(self.row, self.col, self.difficulty, true, &self.player1, &"Computer".to_string())));
                     let canvas: CanvasElement = document()
                     .query_selector("#background")
                     .unwrap()
@@ -474,8 +438,10 @@ impl Component for TOOTComputer {
                     let context: CanvasRenderingContext2d = canvas.get_context().unwrap();
                     context.clear_rect(0.0, 0.0, canvas.width() as f64, canvas.height() as f64);
                     background(self.game.clone());
+                                        
+                    self.winner = 0;
+                    self.is_draw = false;
                 }
-                // test_draw(self.game.clone(), 0);
             }
         }
         true
@@ -486,14 +452,6 @@ impl Component for TOOTComputer {
 
     fn view(&self, _ctx: &Context<Self>) -> Html {
 
-        // let onchange = _ctx.link().batch_callback(|e| {
-        //     if let ChangeData::Select(select) = e {
-        //         // do something with web_sys::HtmlSelectElement
-        //         self.TO = select.value;
-        //     } else {
-        //         None
-        //     }
-        // });
 
         html! {
             <div style="margin-left:30%">
@@ -512,6 +470,12 @@ impl Component for TOOTComputer {
                         <option selected=false disabled=false value="medium">{"Medium"}</option>
                         <option selected=false disabled=false value="hard">{"Hard"}</option>
                     </select>
+
+                    <select id="board_size" style="margin: 5px">
+                        <option selected=true disabled=false value="7x6">{"7x6"}</option>
+                        <option selected=false disabled=false value="7x7">{"7x7"}</option>
+                        <option selected=false disabled=false value="6x4">{"6x4"}</option>
+                    </select>
                     <button
                         id="startbutton" 
                         onclick={&self.start_callback}
@@ -519,16 +483,8 @@ impl Component for TOOTComputer {
                         title="Start Game">
                         { "Start Game" }
                     </button>
-                    // <button id = "startbutton" onclick={Callback::from(|_| ())}>
-                    //      ^^^^^^^ event listener name
-                    //     { "start game!" }
-                    // </button>
-                    // <button style="margin: 5px" onclick={Callback::from(|_| (Msg::StartGame))}>{ "Start Game" }</button>
-                    // <button style="margin: 5px" onclick={_ctx.link().callback(|_| Msg::StartGame)}>{ "Start Game" }</button>
-                    </div>
-                // <h4>{format!("New Game:  {} Vs Computer",self.player1)}</h4>
+                </div>
                 <p>{format!("New Game:  {} Vs Computer",self.player1)}</p>
-                <p>{format!("diff:  {} Vs Computer",self.difficulty)}</p>
             </div>
             }
             }
@@ -537,8 +493,6 @@ impl Component for TOOTComputer {
             <div class="post" ng-repeat="game in games">
                 <br/>
                 <p>{format!("diff:  {} Vs Computer",self.difficulty)}</p>
-                <p>{format!("TO:  {}",self.TO)}</p>
-                <p>{format!("new col:  {}",self.new_select_col)}</p>
                 <h4>{format!("New Game:  {} Vs Computer",self.player1)}</h4>
                 <small>{format!("(Winning Combination: {} - ", self.player1)} <b>{"TOOT"}</b> {"   and    Computer - "} <b>{"OTTO)"}</b></small>
                 <br/>
@@ -556,9 +510,9 @@ impl Component for TOOTComputer {
     }
 }
 use serde::Serialize;
+use wasm_bindgen::closure::Closure;
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Branch {
-    pub _id: String,
     pub game_type: String,
     pub p1_name: String,
     pub p2_name: String,
@@ -567,154 +521,40 @@ pub struct Branch {
     pub difficulty: String,
     pub date_time: String,
 }
-async fn req() -> Result<JsValue, JsValue>{
+async fn req(p1: String, p2: String, draw: bool, winner: String, difficulty: String, date_time: String){
     use reqwest::header::CONTENT_TYPE;
     use reqwest::header::ACCEPT;
     use reqwest::header::AUTHORIZATION;
     use reqwest::RequestBuilder;
-    // use reqwest::Client;
-    let gist_body = json!({
-        "game_type": "Connect-4",
-        "p1_name": "John",
-        "p2_name": "Computer",
-        "is_draw": false,
-        "winner_name": "Computer",
-        "difficulty": "Hard",
-        "date_time": "2022-04-06T05:00:00.00Z"
-    });
-    let request_url = "http://127.0.0.1:5000/gameresults";
-    let client = reqwest::Client::new();
-    // let resp = client
-    // .post(request_url)
-    // .header(CONTENT_TYPE, "application/json")
-    // .json(&gist_body)
-    // .send()
-    // .await
-    // .unwrap();
 
-    // let resp = client.
-    // get("http://localhost:5000/gameresults").
-    // fetch_mode_no_cors().
-    // // json(&gist_body).
-    // // header(ACCEPT, "application/json").
-    // // header(CONTENT_TYPE, "application/json").
-    // send().await.unwrap().text().await;
-    // // let resp = reqwest::get("http://127.0.0.1:5000/gameresults")
-    // // .await;
-    // log::info!("body = {:#?}", resp);
-    // // link.send_self(Msg::record());
-    // return resp.unwrap();
+    let game_type = "TootAndOtto".to_string();
+    let p1_name = p1;
+    let p2_name = p2;
+    let is_draw = draw;
+    let winner_name = winner;
+    let difficulty = difficulty;
+    let date_time = date_time;
 
-
-    // use web_sys::{Request, RequestInit, RequestMode, Response};
-    // use wasm_bindgen_futures::JsFuture;
-    // use wasm_bindgen::JsCast;
-    let mut opts = RequestInit::new();
-    opts.method("GET");
-    opts.mode(RequestMode::NoCors);
-
-    let url = "http://127.0.0.1:5000/gameresults";
-
-    let request = Request::new_with_str_and_init(&url, &opts)?;
-    request
-        .headers()
-        .set("Accept", "application/json")?;
-
+    let data = JsValue::from_serde(&Branch {
+        game_type,
+        p1_name,
+        p2_name,
+        is_draw,
+        winner_name,
+        difficulty,
+        date_time,
+    })
+    .unwrap();
+    let request = web_sys::Request::new_with_str_and_init(
+        "/api/gameresults",
+        web_sys::RequestInit::new()
+            .body(Some(js_sys::JSON::stringify(&data).unwrap().as_ref()))
+            .method("POST"),
+    ).unwrap();
+    request.headers()
+        .set("Content-Type", "application/json")
+        .unwrap();
     let window = web_sys::window().unwrap();
-    // let resp_value = window.fetch_with_request(&request.unwrap());
-    let resp_value = JsFuture::from(window.fetch_with_request(&request)).await?;
-    log::info!("body = {:#?}", &resp_value);
-    // log::info!("body = {:#?}", &resp_value.unwrap().as_string());
+    window.fetch_with_request(&request);
 
-    // assert!(resp_value.is_instance_of::<Response>());
-    let resp: Response = resp_value.dyn_into().unwrap();
-
-    log::info!("body = {:#?}", &resp);
-    let json = JsFuture::from(resp.json()?).await?;
-    log::info!("body = {:#?}", &json);
-
-    let branch_info: Branch = json.into_serde().unwrap();
-    log::info!("body = {:#?}", &branch_info);
-
-    // let branch_info = json.unwrap().into_serde().unwrap();
-
-    // let resp = Request::get("http://localhost:5000/gameresults")
-    // .send()
-    // .await
-    // .unwrap();
-
-    // log::info!("body = {:#?}", resp_value);
-    Ok(JsValue::from_serde(&branch_info).unwrap())
-}
-
-fn post_game() -> Result<(), Box<dyn std::error::Error>>{
-    use reqwest::header::CONTENT_TYPE;
-    use reqwest::header::ACCEPT;
-    use reqwest::header::AUTHORIZATION;
-    // use reqwest::Client;
-    let gist_body = json!({
-        "game_type": "Connect-4",
-        "p1_name": "John",
-        "p2_name": "Computer",
-        "is_draw": false,
-        "winner_name": "Computer",
-        "difficulty": "Hard",
-        "date_time": "2022-04-06T05:00:00.00Z"
-    });
-    let request_url = "http://127.0.0.1:5000/gameresults";
-
-    let url = format!(
-        "https://api.spotify.com/v1/search?q={query}&type=track,artist",
-        // go check out her latest album. It's 🔥
-        query = "Little Simz"
-    );
-
-    // let client = reqwest::blocking::Client::new();
-    // let response = client
-    // .post(request_url)
-    // .header(CONTENT_TYPE, "application/json")
-    // .json(&gist_body);
-    // .send()
-    // .await
-    // .unwrap();
-
-    // let response = reqwest::get("http://127.0.0.1:5000/gameresults?winner_name=Computer")
-    // .await?
-    // .json::<HashMap<String, String>>()
-    // .await?;
-    // use reqwasm::http::Request;
-
-
-
-
-    // let resp = reqwest::blocking::get("http://127.0.0.1:5000/gameresults")?;
-
-    // let client = reqwest::blocking::Client::new();
-    // let response = client
-    // .get(url)
-    // .header(AUTHORIZATION, "Bearer [AUTH_TOKEN]")
-    // .header(CONTENT_TYPE, "application/json")
-    // .header(ACCEPT, "application/json")
-    // .send()
-    // .await
-    // .unwrap();
-
-
-    // match response.status() {
-    //     reqwest::StatusCode::OK => {
-    //         // on success, parse our JSON to an APIResponse
-    //         match response.json::<i32>().await {
-    //             Ok(parsed) => println!("Success! {:?}", parsed),
-    //             Err(_) => println!("Hm, the response didn't match the shape we expected."),
-    //         };
-    //     }
-    //     reqwest::StatusCode::UNAUTHORIZED => {
-    //         println!("Need to grab a new token");
-    //     }
-    //     other => {
-    //         panic!("Uh oh! Something unexpected happened: {:?}", other);
-    //     }
-    // };
-    // log::info!("body = {:#?}", resp);
-    Ok(())
 }

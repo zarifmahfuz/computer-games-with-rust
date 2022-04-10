@@ -5,7 +5,7 @@ use mongodb::bson::serde_helpers::bson_datetime_as_rfc3339_string;
 #[derive(Debug, Clone, Deserialize, Serialize)]
 #[serde(crate = "rocket::serde")]
 pub struct GameResult {
-    pub _id: Option<String>,
+    pub _id: Option<i64>,
     pub game_type: String,
     pub p1_name: String,
     pub p2_name: String,
@@ -18,7 +18,7 @@ pub struct GameResult {
 #[derive(Debug, Clone, Deserialize, Serialize)]
 #[serde(crate = "rocket::serde")]
 pub struct JsonGameResult {
-    pub _id: Option<String>,
+    pub _id: Option<i64>,
     pub game_type: String,
     pub p1_name: String,
     pub p2_name: String,
