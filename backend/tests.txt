@@ -1,14 +1,14 @@
-curl -X POST -H "Content-Type: application/json" http://127.0.0.1:5000/gameresults -d '{
+curl -X POST -H "Content-Type: application/json" http://127.0.0.1:5000/api/gameresults -d '{
     "game_type": "Connect-4",
     "p1_name": "Zarif",
     "p2_name": "Computer",
     "is_draw": false,
     "winner_name": "Computer",
     "difficulty": "Hard",
-    "date_time": "2022-04-06T05:00:00.00Z"
+    "date_time": "2022-04-09T14:00:00.00Z"
 }'
 
-curl -i -X GET http://127.0.0.1:5000/gameresults
+curl -i -X GET http://127.0.0.1:5000/api/gameresults
 
 INVALID POST REQUEST EXAMPLE -
 curl -X POST -H "Content-Type: application/json" http://127.0.0.1:5000/gameresults -d '{
@@ -19,20 +19,20 @@ curl -X POST -H "Content-Type: application/json" http://127.0.0.1:5000/gameresul
     "difficulty": "Hard",
 }'
 
-curl -i -X DELETE http://127.0.0.1:5000/gameresults
+curl -i -X DELETE http://127.0.0.1:5000/api/gameresults
 
-curl -i -X GET "http://127.0.0.1:5000/gameresults?winner_name=Computer"
+curl -i -X GET "http://127.0.0.1:5000/api/gameresults?winner_name=Computer"
 
-curl -X POST -H "Content-Type: application/json" http://127.0.0.1:5000/gameresults -d '{
-    "game_type": "Connect-4",
-    "p1_name": "Zarif",
+curl -X POST -H "Content-Type: application/json" http://127.0.0.1:5000/api/gameresults -d '{
+    "game_type": "TootAndOtto",
+    "p1_name": "John",
     "p2_name": "Computer",
     "is_draw": false,
     "winner_name": "Computer",
-    "difficulty": "Medium",
-    "date_time": "2022-04-06T05:00:00.00Z"
+    "difficulty": "Easy",
+    "date_time": "2022-04-09T15:00:00.00Z"
 }'
 
-curl -i -X GET "http://127.0.0.1:5000/leaderboard"
+curl -i -X GET "http://127.0.0.1:5000/api/leaderboard"
 
-curl -i -X GET "http://127.0.0.1:5000/leaderboard?difficulty=Hard"
+curl -i -X GET "http://127.0.0.1:5000/api/leaderboard?difficulty=Medium"

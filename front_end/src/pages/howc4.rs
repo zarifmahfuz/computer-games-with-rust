@@ -20,7 +20,7 @@ impl Component for HowToConnect4 {
 
     fn view(&self, _ctx: &Context<Self>) -> Html {
         html! {
-            <div style="margin-left:25%">
+            <div style="margin-left:30%">
             <div class="w3-container" id="services" style="margin-top:75px">
                 <h5 class="w3-xxxlarge w3-text-red"><b>{"How to Play Connect 4"}</b></h5>
                 <hr style="width:50px;border:5px solid red" class="w3-round"/>
