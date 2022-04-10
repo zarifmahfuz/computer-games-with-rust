@@ -45,7 +45,7 @@ fn game_history() -> Html {
         use_effect_with_deps(move |_| {
             let game_results = game_results.clone();
             wasm_bindgen_futures::spawn_local(async move {
-                let fetched_results: Vec<GameResult> = Request::get("/gameresults")
+                let fetched_results: Vec<GameResult> = Request::get("/api/gameresults")
                     .send()
                     .await
                     .unwrap()
