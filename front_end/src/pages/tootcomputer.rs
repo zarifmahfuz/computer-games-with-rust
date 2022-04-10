@@ -54,6 +54,7 @@ pub struct TOOTComputer {
     col: usize,
     row: usize,
     calculating: bool,
+    diff_string: String,
 }
 
 // draw the background for you
@@ -262,6 +263,8 @@ impl Component for TOOTComputer {
             col:7,
             row:6,
             calculating: false,
+            // default
+            diff_string: "Easy".to_string(),
         }
     }
 
@@ -302,6 +305,12 @@ impl Component for TOOTComputer {
                     "medium" => 2,
                     "hard" => 5,
                     _ => 1,
+                };
+                self.diff_string = match self.difficulty {
+                    1 => "Easy".to_string(),
+                    2 => "Medium".to_string(),
+                    5 => "Hard".to_string(),
+                    _ => "Easy".to_string(),
                 };
 
                 let difficulty_selector: SelectElement = document()
@@ -719,7 +728,7 @@ impl Component for TOOTComputer {
             html!{
             <div class="post" ng-repeat="game in games">
                 <br/>
-                <p>{format!("diff:  {} Vs Computer",self.difficulty)}</p>
+                <p>{format!("diff:  {} Vs Computer",self.diff_string)}</p>
                 <h4>{format!("New Game:  {} Vs Computer",self.player1)}</h4>
                 <small>{format!("(Winning Combination: {} - ", self.player1)} <b>{"TOOT"}</b> {"   and    Computer - "} <b>{"OTTO)"}</b></small>
                 <br/>
