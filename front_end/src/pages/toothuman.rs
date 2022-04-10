@@ -32,7 +32,9 @@ macro_rules! enclose {
         }
     };
 }
-
+// Please note, some of those callbacks are defined 
+// at the start stage of the implementation and 
+// in the later stage, they are discarded.
 pub struct TOOTHuman {
     player1: String,
     player2: String,
@@ -41,9 +43,9 @@ pub struct TOOTHuman {
     // used to update name
     name_callback1: Callback<InputEvent>,
     name_callback2: Callback<InputEvent>,
-    // used to update diff
+    // dead callback
     diff_callback: Callback<InputEvent>,
-    // used to change T or O
+    // dead callback
     TO_callback: Callback<InputEvent>,
     // used to start the game
     start_callback: Callback<MouseEvent>,
@@ -489,7 +491,7 @@ impl Component for TOOTHuman {
             </div> 
             }}
             }
-            <canvas id="background" height="760" width="640"></canvas>
+            <canvas id="background" height="1000" width="1000"></canvas>
             </div>
         }
     }
