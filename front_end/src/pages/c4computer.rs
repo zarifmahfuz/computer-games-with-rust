@@ -1,6 +1,8 @@
 use yew::prelude::*;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
+use serde::Deserialize;
+use serde_json::json;
 
 pub struct Connect4Computer {
     game_started: bool,
@@ -222,6 +224,27 @@ impl Component for Connect4Computer {
             },
             Connect4ComputerMsg::StartGame => {
                 self.game_started = true;
+
+                use reqwasm::http::Request;
+                let videos = use_state(|| vec![]);
+                {
+                    let videos = videos.clone();
+                    use_effect_with_deps(move |_| {
+                        let videos = videos.clone();
+                        wasm_bindgen_futures::spawn_local(async move {
+                            let fetched_videos: Vec<Branch> = Request::get("http://127.0.0.1:5000/gameresults")
+                                .send()
+                                .await
+                                .unwrap()
+                                .json()
+                                .await
+                                .unwrap();
+                                videos.set(fetched_videos);
+                        });
+                            || ()
+                        }, ());
+                }
+            
             },
         }
         true
@@ -264,4 +287,15 @@ impl Component for Connect4Computer {
             </div>
         }
     }
+}
+#[derive(Clone, PartialEq, Deserialize)]
+pub struct Branch {
+    pub _id: String,
+    pub game_type: String,
+    pub p1_name: String,
+    pub p2_name: String,
+    pub is_draw: bool,
+    pub winner_name: String,
+    pub difficulty: String,
+    pub date_time: String,
 }

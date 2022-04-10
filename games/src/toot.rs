@@ -1,25 +1,28 @@
+use std::collections::HashMap;
+
 #[derive(Clone)]
 pub struct TootAndOttoState {
-    max: i32,               // player 2 will always be MAX; MAX tries to spell OTTO
-    min: i32,               // player 1 will always be MIN; MIN tries to spell TOOT
-    empty: i32,
-    t_val: i32,
-    o_val: i32,
-    rows: usize,
-    cols: usize,
-    size: usize,
-    to_move: i32,
-    moves_made: i32,
-    grid: Vec<Vec<i32>>,
-    ai_search_height: i32,
-    against_ai: bool,
-    player_1: String,
-    player_2: String,
+    pub max: i32,               // player 2 will always be MAX; MAX tries to spell OTTO
+    pub min: i32,               // player 1 will always be MIN; MIN tries to spell TOOT
+    pub empty: i32,
+    pub t_val: i32,
+    pub o_val: i32,
+    pub rows: usize,
+    pub cols: usize,
+    pub size: usize,
+    pub to_move: i32,
+    pub moves_made: i32,
+    pub grid: Vec<Vec<i32>>,
+    pub ai_search_height: i32,
+    pub against_ai: bool,
+    pub player_1: String,
+    pub player_2: String,
+    pub h_map: HashMap<usize,usize>,
 }
 
 impl TootAndOttoState {
     pub fn new(rows: usize, cols: usize, search_height: i32, against_ai: bool, p1: &String, p2: &String) -> Self {
-        Self {
+        let mut game = TootAndOttoState {
             max: 1,
             min: -1,
             empty: 0,
@@ -35,7 +38,12 @@ impl TootAndOttoState {
             against_ai,
             player_1: p1.clone(),       // player_1 is MIN
             player_2: p2.clone(),       // player_2 is MAX
+            h_map: HashMap::new(),
+        };
+        for col in 0..game.cols {
+            game.h_map.insert(col,0);
         }
+        game
     }
 
     // returns true for valid entry, returns false otherwise

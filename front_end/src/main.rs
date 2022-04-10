@@ -13,7 +13,8 @@ use pages::{
             toothuman::TOOTHuman,
             scoreboard::ScoreBoard,
             score::Score,
-            howc4::HowToConnect4};
+            howc4::HowToConnect4,
+        };
 
 #[derive(Clone, Routable, PartialEq)]
 pub enum Route {
@@ -128,5 +129,6 @@ fn switch(routes: &Route) -> Html {
 }
 
 fn main() {
+    wasm_logger::init(wasm_logger::Config::default());
     yew::start_app::<App>();
 }
