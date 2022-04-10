@@ -36,6 +36,7 @@ fn game_results(GameResultsProps { game_results }: &GameResultsProps) -> Html {
             <td>{ format!("{}", game_result.game_type) }</td>
             <td>{ format!("{}", game_result.winner_name) }</td>
             <td>{ format!("{}", game_result.p1_name) }</td>
+            <td>{ format!("{}", game_result.difficulty) }</td>
             <td>{ format!("{}", dt) }</td>
             </tr>
         }
@@ -164,6 +165,7 @@ fn leaderboard() -> Html {
                             <th>{"Game Type"}</th>
                             <th>{"Winner"}</th>
                             <th>{"Played Against"}</th>
+                            <th>{"Difficulty"}</th>
                             <th>{"When Played"}</th>
                         </tr>
                         <GameResults game_results={(*computer_game_results).clone()}/>
