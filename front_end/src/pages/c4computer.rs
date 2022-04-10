@@ -1,10 +1,15 @@
+use my_2nd_yew_app::connect4::Connect4State;
+
 use yew::prelude::*;
-use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
+use std::convert::TryInto;
 
 pub struct Connect4Computer {
     game_started: bool,
     player_1_name: String,
+    player_2_name: String,
+    board_size: (i32, i32),
+    difficulty: i32,
 }
 
 pub enum Connect4ComputerMsg {
@@ -15,19 +20,23 @@ pub enum Connect4ComputerMsg {
 #[derive(PartialEq, Debug, Clone)]
 struct Connect4Info {
     game_started: bool,
-    player_name: String,
+    player_1_name: String,
+    player_2_name: String,
+    board_size: (i32, i32),
+    difficulty: i32,
 }
 
 #[derive(PartialEq, Debug, Clone)]
 struct GameBoard {
     gameboard: Vec<Vec<i32>>,
+    controller: i32,
+    connect_obj: Connect4State,
 }
 
 #[derive(Properties, PartialEq)]
 struct ViewGameInfoProps {
     game_info: Option<Connect4Info>
 }
-
 
 #[function_component(ViewGameInfo)]
 fn view_game(props: &ViewGameInfoProps) -> Html {
@@ -42,14 +51,21 @@ fn view_game(props: &ViewGameInfoProps) -> Html {
         web_sys::console::log_1(&"NO_STARTED".clone().into());
         return html! {};
     }
+    let game_info_callback = game_info.clone();
+    let board_col = game_info_callback.board_size.0.try_into().unwrap();
+    let board_row = game_info_callback.board_size.1.try_into().unwrap();
 
-    // handle the clicking
+    // used to track the game board status
     let game_board_state = use_state_eq::<GameBoard,_>(|| 
         GameBoard {
-            gameboard: vec![ vec![0; 6]; 7] // chaneg the 6 for the correct board size
+            gameboard: vec![ vec![0; board_row]; board_col],
+            controller: 1, // indicates whose player's turn it is
+            connect_obj: Connect4State::new(board_row, board_col, game_info_callback.difficulty, true, &game_info_callback.player_1_name, &game_info_callback.player_2_name)
         });
+
     let game_board_state_clone = game_board_state.clone();
 
+    // handle the clicking
     let redraw = Callback::from(move |mouse_event: MouseEvent| {
         web_sys::console::log_1(&mouse_event.clone().into());
         let document = web_sys::window().unwrap().document().unwrap();
@@ -67,68 +83,138 @@ fn view_game(props: &ViewGameInfoProps) -> Html {
             .dyn_into::<web_sys::CanvasRenderingContext2d>()
             .unwrap();
 
+
         let rect = canvas.get_bounding_client_rect();
         let x_coord = (mouse_event.client_x() as f64) - rect.left();
         let y_coord = (mouse_event.client_y() as f64) - rect.top();
 
-        let mut j = 0;
-        while j < 7 {
 
-            if ((x_coord - (75.0 * (j as f64) + 100.0))*(x_coord - (75.0 * (j as f64) + 100.0)) ) <=  (25.0 * 25.0) {
-                // console.log("clicked region " + j);
-                
-                web_sys::console::log_1(&"click valid".clone().into());
+        let mut turns = 0;
 
-                let mut valid_move = false;
-                let mut row = 0;
-                let mut i = 0;
-                let mut board;
-                board = (*game_board_state).clone();
+        let mut board;
+        board = (*game_board_state).clone();
 
-                while  i < 6 {
-                    if board.gameboard[j][i] != 1 {
-                        // it's empty, you can add circle here
-                        board.gameboard[j][i] = 1;
-
-                        // addCircle();
-                        web_sys::console::log_1(&(format!("the board: {:?} ", board)).clone().into());
-                        game_board_state.set(board);
-
-                        // keep this here to trigger the drawing
-                        context.begin_path();
-                        context.set_fill_style(&"#ff4136".into()); 
-                        row = (i+6 - 2*i)-1;
-                        context.arc(75.0 * (j as f64) + 100.0, 75.0 * (row as f64) + 50.0, 25.0, 0.0, std::f64::consts::PI * 2.0);
-                        context.fill();
-
-                        valid_move = true;
-                        break; // you added the piece, you are done
-                    }
-                    // that row is full, go to the next one
-                    i+=1
-                }
-
-                if valid_move {
-                    // computer makes a move
-                    web_sys::console::log_1(&("computer move!").clone().into());
-                }
-
-                // this.paused = false;
-
-                // check if entering a thing is valid
-
-
-                // valid = this.action(j); 
-                // if (valid === 1) { // give user retry if action is invalid
-                //     this.rejectClick = true;
-                // }
-                break; //because there will be no 2 points that are clicked at a time
-            }
-            j+=1;
+        let winner = board.connect_obj.check_winner();
+        if winner != 0 {
+            document.location().unwrap().reload();
+            return;
         }
+
+        let mut valid_move = false;
+            // web_sys::console::log_1(&format!(" board controller: {}", turns, board.controller).clone().into());
+
+            let mut j = 0;
+            while j < board_col {
+
+                if ((x_coord - (75.0 * (j as f64) + 100.0))*(x_coord - (75.0 * (j as f64) + 100.0)) ) <=  (25.0 * 25.0) {
+                    
+                    // web_sys::console::log_1(&"click valid".clone().into());
+
+                    
+                    let mut row = 0;
+                    let mut i = 0;
+
+                    while  i < board_row {
+                        if board.gameboard[j][i] == 0 {
+                            // it's empty, you can add circle here
+                            board.gameboard[j][i] = board.controller;
+
+                            // web_sys::console::log_1(&(format!("the board: {:?} ", board)).clone().into());
+
+                            // keep this here to trigger the drawing
+                            context.begin_path();
+                            if board.controller == 1 {
+                                context.set_fill_style(&"#ff4136".into()); 
+                                board.connect_obj.player_1_move(j);
+                            }
+                            else {
+                                context.set_fill_style(&"#ffff00".into()); 
+                            }
+                            row = (i+board_row - 2*i)-1;
+                            context.arc(75.0 * (j as f64) + 100.0, 75.0 * (row as f64) + 50.0, 25.0, 0.0, std::f64::consts::PI * 2.0);
+                            context.fill();
+
+                            valid_move = true;
+                            break; // you added the piece, you are done
+                        }
+                        // that row is full, go to the next one
+                        i+=1
+                    }
+
+                    if valid_move {
+                        let winner = board.connect_obj.check_winner();
+                        if winner != 0 {
+                            let mut win_text: String = "It's a draw".to_owned();
+                            if winner == 1 {
+                                win_text = format!("{} wins",game_info_callback.player_2_name.to_string());
+                            }
+                            else if winner == -1 {
+                                win_text = format!("{} wins",game_info_callback.player_1_name.to_string());
+                            }
+
+                            // show a winning message
+                            win_text += " - Click on game board to reset";
+
+                            context.set_font("14pt sans-serif");
+                            context.set_fill_style(&"#111".into());
+                            context.fill_text(&win_text, 130.0, 20.0);
+
+                            game_board_state.set(board);
+                            return;
+                        }
+                    }
+
+                    break;
+                }
+                j+=1;
+            }
+
+        if valid_move {
+            web_sys::console::log_1(&"computer makes a move".clone().into());
+            let col_num = board.connect_obj.player_2_move(0).1;
+            let col:usize = col_num.try_into().unwrap();
+            let mut y = 0;
+            while  y < board_row {
+                if board.gameboard[col][y] == 0 {
+                    // it's empty, you can add circle here
+                    board.gameboard[col][y] = board.controller;
+
+                    // keep this here to trigger the drawing
+                    context.begin_path();
+                    context.set_fill_style(&"#ffff00".into()); 
+
+                    let row = (y+board_row - 2*y)-1;
+                    context.arc(75.0 * (col as f64) + 100.0, 75.0 * (row as f64) + 50.0, 25.0, 0.0, std::f64::consts::PI * 2.0);
+                    context.fill();
+                    break; // you added the piece, you are done
+                }
+                // that row is full, go to the next one
+                y+=1
+            }
+
+            let winner = board.connect_obj.check_winner();
+            if winner != 0 {
+                let mut win_text: String = "It's a draw".to_owned();
+                if winner == 1 {
+                    win_text = format!("{} wins",game_info_callback.player_2_name.to_string());
+                }
+                else if winner == -1 {
+                    win_text = format!("{} wins",game_info_callback.player_1_name.to_string());
+                }
+
+                // show a winning message
+                win_text += " - Click on game board to reset";
+
+                context.set_font("14pt sans-serif");
+                context.set_fill_style(&"#111".into());
+                context.fill_text(&win_text, 130.0, 20.0);
+            }
+        }
+        game_board_state.set(board);
 
     });
 
+    // draw the board
     use_effect(move || {
         // Make a call to DOM API after component is rendered
         web_sys::console::log_1(&"update".clone().into());
@@ -156,9 +242,9 @@ fn view_game(props: &ViewGameInfoProps) -> Html {
             let mut y = 0;
             let mut x = 0;
             context.set_fill_style(&"#00bfff".into()); 
-            while y <6 {
+            while y <board_row {
                 x = 0;
-                while x < 7 {
+                while x < board_col {
                     context.arc(75.0 * (x as f64) + 100.0, 75.0 * (y as f64) + 50.0, 25.0, 0.0, std::f64::consts::PI * 2.0).unwrap();
                     context.rect(75.0 * (x as f64) + 150.0, 75.0 * (y as f64), -100.0, 100.0);
                     x+=1;
@@ -167,8 +253,6 @@ fn view_game(props: &ViewGameInfoProps) -> Html {
             }
             context.fill();
         }
-
-
         // Perform the cleanup
         || web_sys::console::log_1(&"cleanup".clone().into())
     });
@@ -179,26 +263,25 @@ fn view_game(props: &ViewGameInfoProps) -> Html {
 
             <div class="post" ng-repeat="game in games">
                 <br/>
-                    <h4>{format!("New Game: {} Vs Computer", game_info.player_name)}</h4>
-                    <small> {format!("Disc Colors: {} - ", game_info.player_name)} </small>
+                    <h4>{format!("New Game: {} Vs {}", game_info.player_1_name,game_info.player_2_name )}</h4>
+                    <small> {format!("Disc Colors: {} - ", game_info.player_1_name)} </small>
                     <small> <strong> {"Red"} </strong> </small>
-                    <small>{" and Computer - "}</small>
+                    <small>{format!(" and {} - ", game_info.player_2_name)}</small>
                     <small> <b>{"Yellow"}</b></small>
                 <br/>
             </div>
 
-
-            <canvas id="gameboard" height="480" width="640" onclick = {redraw} ></canvas>
+            <canvas id="gameboard" height={format!("{}", board_row*80)} width={format!("{}", board_col*90)} onclick = {redraw} ></canvas>
         </div>
     }
 }
+
 
 #[derive(Properties, PartialEq)]
 pub struct GameProps {
     #[prop_or_default]
     pub children: Children,
 }
-
 
 impl Component for Connect4Computer {
     type Message = Connect4ComputerMsg;
@@ -208,6 +291,9 @@ impl Component for Connect4Computer {
         Self {
             game_started: false,
             player_1_name: String::from(""),
+            player_2_name: String::from("Computer"),
+            board_size: (6,7),
+            difficulty: 1,
         }
     }
 
@@ -222,6 +308,25 @@ impl Component for Connect4Computer {
             },
             Connect4ComputerMsg::StartGame => {
                 self.game_started = true;
+
+                let document = web_sys::window().unwrap().document().unwrap();
+
+                // get the selected board size
+                let selector = document.query_selector("#size_selector")
+                    .unwrap()
+                    .unwrap()
+                    .dyn_into::<web_sys::HtmlSelectElement>()
+                    .unwrap();
+                let val = selector.value();
+
+                // store the selected board size
+                match val.as_str() {
+                    "7x6" => self.board_size = (7,6),
+                    "6x4" => self.board_size = (6,4),
+                    "8x8" => self.board_size = (8,8),
+                    _ => println!("something else!"),
+                }
+                // web_sys::console::log_2(&self.board_size.clone().0.into(), &self.board_size.clone().1.into());
             },
         }
         true
@@ -232,35 +337,49 @@ impl Component for Connect4Computer {
     }
 
     fn view(&self, ctx: &Context<Self>) -> Html {
-        // let game_state_outer = game_state.clone();
-        // let game_state = use_latest::<Option<GameInfo>,_>(|| None);
 
-        let oninput = ctx.link().callback(|e: InputEvent| Connect4ComputerMsg::Player1Name(e.data()));
+        let oninput1 = ctx.link().callback(|e: InputEvent| Connect4ComputerMsg::Player1Name(e.data()));
         let onclick = ctx.link().callback(|_| Connect4ComputerMsg::StartGame);
-        
+
         let game_info = Connect4Info {
             game_started: self.game_started.clone(),
-            player_name: self.player_1_name.clone(),
+            player_1_name: self.player_1_name.clone(),
+            player_2_name: self.player_2_name.clone(),
+            board_size: self.board_size.clone(),
+            difficulty: self.difficulty.clone(),
         };
 
         html! {
             <div id="main" style="margin-left:30%">
-                <div class="w3-container" id="services" style="margin-top:75px">
-                    <h5 class="w3-xxxlarge w3-text-red"><b>{"Enter Your Name"}</b></h5>
-                    <hr style="width:50px;border:5px solid red" class="w3-round"/>
-                </div>
+            <div class="w3-container" id="services" style="margin-top:75px">
+                <h5 class="w3-xxxlarge w3-text-red"><b>{"Enter Player Names"}</b></h5>
+                <hr style="width:50px;border:5px solid red" class="w3-round"/>
+            </div>
 
-                <div class="col-md-offset-4 col-md-8">
-                    <div class="col-md-offset-3 col-md-8">
-                        <input id="textbox1" type="text" placeholder="Your Name" {oninput}/>
-                        <input id="startbutton" class="button" type="submit" value="Start Game" {onclick}/>
-                    </div>
-                </div>
+            <div class="col-md-offset-4 col-md-8">
+                <input id="textbox1" type="text" placeholder="Player 1's Name" oninput = {oninput1}/>
+                <input id="startbutton" class="button" type="submit" {onclick} /> //value="Start Game"
+            </div>
+
+            <div>
+                <label for="size_selector"> {"Choose a board size:"} </label>
+                <select id="size_selector" style="margin: 5px" >
+                    <option selected=true disabled=false value={"7x6"}>{"7x6"}</option>
+                    <option selected=false disabled=false value="6x4">{"6x4"}</option>
+                    <option selected=false disabled=false value="8x8">{"8x8"}</option>
+                </select>
+
+                <label for="diff_selector"> {"Choose a diffuclty:"} </label>
+                <select id="diff_selector" style="margin: 5px" >
+                    <option selected=true disabled=false value=1> {"Easy"}</option>
+                    <option selected=false disabled=false value=2> {"Medium"}</option>
+                    <option selected=false disabled=false value=5> {"Hard"}</option>
+                </select>
+            </div>
 
                 <div>
                     <ViewGameInfo game_info = {Some(game_info)} />
                 </div>
-
             </div>
         }
     }
