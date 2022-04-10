@@ -177,43 +177,43 @@ fn leaderboard() -> Html {
                     <table>
                         <tr>
                             <th>{"Sl. No."}</th>
-                            <th>{"Winner or Draw"}</th>
+                            <th>{"Winner"}</th>
                             <th>{"No. of Wins"}</th>
                         </tr>
                         <Leaders leaders={(*leaders_all_difficulties).clone()}/>
                     </table>
                 </div>
                 <br/>
-                <div><h4>{"Details of Games Won by All Players Against Hard AI"}</h4></div>
+                <div><h4>{"Details of Games Won by All Players in Hard Difficulty"}</h4></div>
                 <div>
                     <table>
                         <tr>
                             <th>{"Sl. No."}</th>
-                            <th>{"Winner or Draw"}</th>
+                            <th>{"Winner"}</th>
                             <th>{"No. of Wins"}</th>
                         </tr>
                         <Leaders leaders={(*leaders_hard_difficulty).clone()}/>
                     </table>
                 </div>
                 <br/>
-                <div><h4>{"Details of Games Won by All Players Against Medium AI"}</h4></div>
+                <div><h4>{"Details of Games Won by All Players in Medium Difficulty"}</h4></div>
                 <div>
                     <table>
                         <tr>
                             <th>{"Sl. No."}</th>
-                            <th>{"Winner or Draw"}</th>
+                            <th>{"Winner"}</th>
                             <th>{"No. of Wins"}</th>
                         </tr>
                         <Leaders leaders={(*leaders_medium_difficulty).clone()}/>
                     </table>
                 </div>
                 <br/>
-                <div><h4>{"Details of Games Won by All Players Against Easy AI"}</h4></div>
+                <div><h4>{"Details of Games Won by All Players Against in Easy Difficulty"}</h4></div>
                 <div>
                     <table>
                         <tr>
                             <th>{"Sl. No."}</th>
-                            <th>{"Winner or Draw"}</th>
+                            <th>{"Winner"}</th>
                             <th>{"No. of Wins"}</th>
                         </tr>
                         <Leaders leaders={(*leaders_easy_difficulty).clone()}/>
