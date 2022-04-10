@@ -92,7 +92,6 @@ impl TootAndOttoState {
             if value.1 < 0 {
                 panic!("Minimax returned negative column index!");
             }
-            
             col_to_move = value.1 as usize;
             t_or_o = value.2;
         } else {
