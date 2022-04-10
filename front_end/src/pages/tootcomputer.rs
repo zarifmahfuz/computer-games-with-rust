@@ -539,82 +539,82 @@ impl Component for TOOTComputer {
                             else if self.winner == 0 {
                                 // let link = _ctx.link().clone();
                                 // link.send_message(Msg::record());
-                                // log::info!("you should be executed after player disc is drawn");
-                                // let (row_to_move, col_to_move, TO_flag) = self.game.clone().borrow_mut().player_2_move(0,1);
-                                // log::info!("TO falg is {} in canvas",TO_flag);
-                                // computer_draw(self.game.clone(), col_to_move as usize, TO_flag);
-                                // self.winner = self.game.clone().borrow().check_winner();
-                                // if self.winner == 1 {
-                                //     winner_draw(self.game.clone(), self.winner);
+                                log::info!("you should be executed after player disc is drawn");
+                                let (row_to_move, col_to_move, TO_flag) = self.game.clone().borrow_mut().player_2_move(0,1);
+                                log::info!("TO falg is {} in canvas",TO_flag);
+                                computer_draw(self.game.clone(), col_to_move as usize, TO_flag);
+                                self.winner = self.game.clone().borrow().check_winner();
+                                if self.winner == 1 {
+                                    winner_draw(self.game.clone(), self.winner);
 
-                                //     let p1 = self.player1.clone();
-                                //     let p2 = self.player2.clone();
-                                //     let draw = self.is_draw.clone();
-                                //     let mut winner = self.player1.clone();
-                                //     let w_id = self.winner.clone();
-                                //     if w_id == -1 {
-                                //         winner = self.player1.clone();
-                                //     }
-                                //     else if w_id == 1{
-                                //         winner = self.player2.clone();
-                                //     }
-                                //     else if w_id == 2{
-                                //         winner = "".to_string();
-                                //     }
-                                //     let mut diff = "Hard".to_string();
-                                //     if self.difficulty == 2 {
-                                //         diff = "Easy".to_string();
-                                //     }
-                                //     else if self.difficulty == 4 {
-                                //         diff = "Medium".to_string();
-                                //     }
-                                //     else if self.difficulty == 5 {
-                                //         diff = "Hard".to_string();
-                                //     }
-                                //     let now = js_sys::Date::new_0();
-                                //     let date: String = now.to_iso_string().into();
+                                    let p1 = self.player1.clone();
+                                    let p2 = self.player2.clone();
+                                    let draw = self.is_draw.clone();
+                                    let mut winner = self.player1.clone();
+                                    let w_id = self.winner.clone();
+                                    if w_id == -1 {
+                                        winner = self.player1.clone();
+                                    }
+                                    else if w_id == 1{
+                                        winner = self.player2.clone();
+                                    }
+                                    else if w_id == 2{
+                                        winner = "".to_string();
+                                    }
+                                    let mut diff = "Hard".to_string();
+                                    if self.difficulty == 2 {
+                                        diff = "Easy".to_string();
+                                    }
+                                    else if self.difficulty == 4 {
+                                        diff = "Medium".to_string();
+                                    }
+                                    else if self.difficulty == 5 {
+                                        diff = "Hard".to_string();
+                                    }
+                                    let now = js_sys::Date::new_0();
+                                    let date: String = now.to_iso_string().into();
                     
-                                //     spawn_local(async move{
-                                //         let resp = req(p1, p2, draw, winner, diff, date).await;
-                                //         log::info!("body = {:#?}", resp);
-                                //     });
-                                // }
-                                // else if self.winner == 2{
-                                //     self.is_draw = true;
-                                //     winner_draw(self.game.clone(), self.winner);
+                                    spawn_local(async move{
+                                        let resp = req(p1, p2, draw, winner, diff, date).await;
+                                        log::info!("body = {:#?}", resp);
+                                    });
+                                }
+                                else if self.winner == 2{
+                                    self.is_draw = true;
+                                    winner_draw(self.game.clone(), self.winner);
 
-                                //     let p1 = self.player1.clone();
-                                //     let p2 = self.player2.clone();
-                                //     let draw = self.is_draw.clone();
-                                //     let mut winner = self.player1.clone();
-                                //     let w_id = self.winner.clone();
-                                //     if w_id == -1 {
-                                //         winner = self.player1.clone();
-                                //     }
-                                //     else if w_id == 1{
-                                //         winner = self.player2.clone();
-                                //     }
-                                //     else if w_id == 2{
-                                //         winner = "".to_string();
-                                //     }
-                                //     let mut diff = "Hard".to_string();
-                                //     if self.difficulty == 2 {
-                                //         diff = "Easy".to_string();
-                                //     }
-                                //     else if self.difficulty == 4 {
-                                //         diff = "Medium".to_string();
-                                //     }
-                                //     else if self.difficulty == 5 {
-                                //         diff = "Hard".to_string();
-                                //     }
-                                //     let now = js_sys::Date::new_0();
-                                //     let date: String = now.to_iso_string().into();
+                                    let p1 = self.player1.clone();
+                                    let p2 = self.player2.clone();
+                                    let draw = self.is_draw.clone();
+                                    let mut winner = self.player1.clone();
+                                    let w_id = self.winner.clone();
+                                    if w_id == -1 {
+                                        winner = self.player1.clone();
+                                    }
+                                    else if w_id == 1{
+                                        winner = self.player2.clone();
+                                    }
+                                    else if w_id == 2{
+                                        winner = "".to_string();
+                                    }
+                                    let mut diff = "Hard".to_string();
+                                    if self.difficulty == 2 {
+                                        diff = "Easy".to_string();
+                                    }
+                                    else if self.difficulty == 4 {
+                                        diff = "Medium".to_string();
+                                    }
+                                    else if self.difficulty == 5 {
+                                        diff = "Hard".to_string();
+                                    }
+                                    let now = js_sys::Date::new_0();
+                                    let date: String = now.to_iso_string().into();
                     
-                                //     spawn_local(async move{
-                                //         let resp = req(p1, p2, draw, winner, diff, date).await;
-                                //         log::info!("body = {:#?}", resp);
-                                //     });
-                                // }
+                                    spawn_local(async move{
+                                        let resp = req(p1, p2, draw, winner, diff, date).await;
+                                        log::info!("body = {:#?}", resp);
+                                    });
+                                }
                             }
                             else if self.winner == 2{
                                 self.is_draw = true;
@@ -674,10 +674,10 @@ impl Component for TOOTComputer {
                     self.is_draw = false;
                 }
 
-                if self.winner == 0 && self.game.clone().borrow().to_move == 1{
-                    let link = _ctx.link().clone();
-                    link.send_message(Msg::record());
-                }
+                // if self.winner == 0 && self.game.clone().borrow().to_move == 1{
+                //     let link = _ctx.link().clone();
+                //     link.send_message(Msg::record());
+                // }
             }
         }
         true
