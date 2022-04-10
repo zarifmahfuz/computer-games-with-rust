@@ -162,7 +162,7 @@ fn winner_draw(game: Rc<RefCell<TootAndOttoState>>, winner: i32, p1: &String, p2
     context.begin_path();
 
     context.set_font("bold 25px serif");
-    
+
     let mut text = "".to_string();
     if winner == -1 {
         text = format!("Player 1 {p1} won, click to restart.");
@@ -457,6 +457,7 @@ impl Component for TOOTHuman {
                                 log::info!("body = {:#?}", resp);
                             });
                         }
+
                         else if self.winner == 2{
                             self.is_draw = true;
                             winner_draw(self.game.clone(), self.winner, &self.player1, &self.player2);
@@ -486,30 +487,6 @@ impl Component for TOOTHuman {
                     }
                 }
                 else {
-
-                    let p1 = self.player1.clone();
-                    let p2 = self.player2.clone();
-                    let draw = self.is_draw.clone();
-                    let mut winner = self.player1.clone();
-                    let w_id = self.winner.clone();
-                    if w_id == -1 {
-                        winner = self.player1.clone();
-                    }
-                    else if w_id == 1{
-                        winner = self.player2.clone();
-                    }
-                    else if w_id == 2{
-                        winner = "".to_string();
-                    }
-                    let diff = "N/A".to_string();
-                    let now = js_sys::Date::new_0();
-                    let date: String = now.to_iso_string().into();
-                    spawn_local(async move{
-                        let resp = req(p1, p2, draw, winner, diff, date).await;
-                        log::info!("body = {:#?}", resp);
-                    });
-
-
 
                     self.game = Rc::new(RefCell::new(TootAndOttoState::new(self.row, self.col, self.difficulty, false, &self.player1, &self.player2)));
                     let canvas: CanvasElement = document()
