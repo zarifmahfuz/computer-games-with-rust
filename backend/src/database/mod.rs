@@ -67,11 +67,14 @@ impl MongoDB {
         let collection = self.database.collection::<GameResult>(self.game_results_col);
         // we need to group by winner name and retrieve the winner name and size of each group
         let mut stage_filter_difficulty = doc! {
-            "$match": { }
+            "$match": { 
+                "is_draw": false
+            }
         };
         if let Some(diff) = difficulty {
             stage_filter_difficulty = doc! {
                 "$match": {
+                    "is_draw": false,
                     "difficulty": diff
                 }
             }
