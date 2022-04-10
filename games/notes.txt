@@ -103,7 +103,3 @@ we have a draw if moves_made == board size
 
 references:
 1. https://github.com/stratzilla/connect-four
-
-
-TootAndOtto
-player_1 tries to spell TOOT and player_2 tries to spell OTTO.

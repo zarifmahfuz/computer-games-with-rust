@@ -56,6 +56,8 @@ pub struct TOOTHuman {
     game: Rc<RefCell<TootAndOttoState>>,
     winner: i32,
     is_draw: bool,
+    col: usize,
+    row: usize,
 }
 
 // draw the background for you
@@ -259,6 +261,8 @@ impl Component for TOOTHuman {
             game: game.clone(),
             winner: 0,
             is_draw: false,
+            col:7,
+            row:6,
         }
     }
 
@@ -284,7 +288,21 @@ impl Component for TOOTHuman {
             Msg::StartGame => {
                 self.start_or_end = true;
 
-                self.game = Rc::new(RefCell::new(TootAndOttoState::new(6, 7, self.difficulty, false, &self.player1, &"Computer".to_string())));
+                let difficulty_selector: SelectElement = document()
+                .query_selector("#board_size")
+                .unwrap()
+                .unwrap()
+                .try_into()
+                .unwrap();
+
+                match difficulty_selector.value().unwrap().as_str() {
+                    "7x6" => {self.col = 7; self.row = 6;},
+                    "7x7" => {self.col = 7; self.row = 7;},
+                    "6x4" => {self.col = 6; self.row = 4;},
+                _ => {self.col = 7; self.row = 6;},
+                };
+
+                self.game = Rc::new(RefCell::new(TootAndOttoState::new(self.row, self.col, self.difficulty, false, &self.player1, &"Computer".to_string())));
 
                 //////
                 let canvas: CanvasElement = document()
@@ -371,6 +389,7 @@ impl Component for TOOTHuman {
                             winner_draw(self.game.clone(), self.winner);
                         }
                         else if self.winner == 2{
+                            self.is_draw = true;
                             winner_draw(self.game.clone(), self.winner);
                         }
                     }
@@ -402,7 +421,7 @@ impl Component for TOOTHuman {
 
 
 
-                    self.game = Rc::new(RefCell::new(TootAndOttoState::new(6, 7, self.difficulty, true, &self.player1, &"Computer".to_string())));
+                    self.game = Rc::new(RefCell::new(TootAndOttoState::new(self.row, self.col, self.difficulty, false, &self.player1, &self.player2)));
                     let canvas: CanvasElement = document()
                     .query_selector("#background")
                     .unwrap()
@@ -413,6 +432,7 @@ impl Component for TOOTHuman {
                     context.clear_rect(0.0, 0.0, canvas.width() as f64, canvas.height() as f64);
                     background(self.game.clone());
                     self.winner = 0;
+                    self.is_draw = false;
                 }
             }
         }
@@ -437,6 +457,11 @@ impl Component for TOOTHuman {
         
                     <input id="textbox1" type="text" placeholder="Your Name" oninput = {&self.name_callback1}/>
                     <input id="textbox2" type="text" placeholder="Your Name" oninput = {&self.name_callback2}/>
+                    <select id="board_size" style="margin: 5px">
+                        <option selected=true disabled=false value="7x6">{"7x6"}</option>
+                        <option selected=false disabled=false value="7x7">{"7x7"}</option>
+                        <option selected=false disabled=false value="6x4">{"6x4"}</option>
+                    </select>
                     <button
                         id="startbutton" 
                         onclick={&self.start_callback}
@@ -473,7 +498,6 @@ use serde::Serialize;
 use wasm_bindgen::closure::Closure;
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Branch {
-    pub _id: String,
     pub game_type: String,
     pub p1_name: String,
     pub p2_name: String,
@@ -488,7 +512,6 @@ async fn req(p1: String, p2: String, draw: bool, winner: String, difficulty: Str
     use reqwest::header::AUTHORIZATION;
     use reqwest::RequestBuilder;
 
-    let _id = "".to_string();
     let game_type = "TootAndOtto".to_string();
     let p1_name = p1;
     let p2_name = p2;
@@ -498,7 +521,6 @@ async fn req(p1: String, p2: String, draw: bool, winner: String, difficulty: Str
     let date_time = date_time;
 
     let data = JsValue::from_serde(&Branch {
-        _id,
         game_type,
         p1_name,
         p2_name,
@@ -509,7 +531,7 @@ async fn req(p1: String, p2: String, draw: bool, winner: String, difficulty: Str
     })
     .unwrap();
     let request = web_sys::Request::new_with_str_and_init(
-        "/gameresults",
+        "/api/gameresults",
         web_sys::RequestInit::new()
             .body(Some(js_sys::JSON::stringify(&data).unwrap().as_ref()))
             .method("POST"),
