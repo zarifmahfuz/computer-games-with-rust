@@ -377,10 +377,10 @@ impl Component for TOOTComputer {
                         winner = "".to_string();
                     }
                     let mut diff = "Hard".to_string();
-                    if self.difficulty == 2 {
+                    if self.difficulty == 1 {
                         diff = "Easy".to_string();
                     }
-                    else if self.difficulty == 4 {
+                    else if self.difficulty == 2 {
                         diff = "Medium".to_string();
                     }
                     else if self.difficulty == 5 {
@@ -413,10 +413,10 @@ impl Component for TOOTComputer {
                         winner = "".to_string();
                     }
                     let mut diff = "Hard".to_string();
-                    if self.difficulty == 2 {
+                    if self.difficulty == 1 {
                         diff = "Easy".to_string();
                     }
-                    else if self.difficulty == 4 {
+                    else if self.difficulty == 2 {
                         diff = "Medium".to_string();
                     }
                     else if self.difficulty == 5 {
@@ -475,10 +475,10 @@ impl Component for TOOTComputer {
                                     winner = "".to_string();
                                 }
                                 let mut diff = "Hard".to_string();
-                                if self.difficulty == 2 {
+                                if self.difficulty == 1 {
                                     diff = "Easy".to_string();
                                 }
-                                else if self.difficulty == 4 {
+                                else if self.difficulty == 2 {
                                     diff = "Medium".to_string();
                                 }
                                 else if self.difficulty == 5 {
@@ -510,10 +510,10 @@ impl Component for TOOTComputer {
                                     winner = "".to_string();
                                 }
                                 let mut diff = "Hard".to_string();
-                                if self.difficulty == 2 {
+                                if self.difficulty == 1 {
                                     diff = "Easy".to_string();
                                 }
-                                else if self.difficulty == 4 {
+                                else if self.difficulty == 2 {
                                     diff = "Medium".to_string();
                                 }
                                 else if self.difficulty == 5 {
@@ -627,10 +627,10 @@ impl Component for TOOTComputer {
                                     winner = "".to_string();
                                 }
                                 let mut diff = "Hard".to_string();
-                                if self.difficulty == 2 {
+                                if self.difficulty == 1 {
                                     diff = "Easy".to_string();
                                 }
-                                else if self.difficulty == 4 {
+                                else if self.difficulty == 2 {
                                     diff = "Medium".to_string();
                                 }
                                 else if self.difficulty == 5 {
