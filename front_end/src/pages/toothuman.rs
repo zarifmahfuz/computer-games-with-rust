@@ -22,6 +22,9 @@ use wasm_bindgen_futures::JsFuture;
 use wasm_bindgen::JsCast;
 use wasm_bindgen::JsValue;
 
+use chrono::Local;
+use instant::Instant;
+
 // https://stackoverflow.com/questions/57547849/rust-adding-event-listeners-to-a-webassembly-game
 // This reference teach you how to implement this macro rulle and how to add listener to a canvas.
 macro_rules! enclose {
@@ -272,17 +275,35 @@ impl Component for TOOTHuman {
         match _msg {
         
             Msg::setPlayerName1(val) => {
+
                 let mut owned = self.player1.to_owned();
-                let another_owned =  val.data().unwrap().to_owned();
-                owned.push_str(&another_owned);
-                self.player1 = owned;
+                if val.data().is_some() {
+                    let another_owned =  val.data().unwrap().to_owned();
+                    owned.push_str(&another_owned);
+                    self.player1 = owned;
+                }
+                else {
+                    let mut chars = self.player1.chars();
+                    chars.next_back();
+                    chars.as_str();
+                    self.player1 = chars.as_str().to_string();
+                }
             }
 
             Msg::setPlayerName2(val) => {
+
                 let mut owned = self.player2.to_owned();
-                let another_owned =  val.data().unwrap().to_owned();
-                owned.push_str(&another_owned);
-                self.player2 = owned;
+                if val.data().is_some() {
+                    let another_owned =  val.data().unwrap().to_owned();
+                    owned.push_str(&another_owned);
+                    self.player2 = owned;
+                }
+                else {
+                    let mut chars = self.player2.chars();
+                    chars.next_back();
+                    chars.as_str();
+                    self.player2 = chars.as_str().to_string();
+                }
             }
 
             Msg::setDifficulty(val) => {self.difficulty = 1;}
@@ -384,21 +405,86 @@ impl Component for TOOTHuman {
                         if self.winner == -1 {
                             log::info!("player1 win");
                             winner_draw(self.game.clone(), self.winner);
+
+                            let p1 = self.player1.clone();
+                            let p2 = self.player2.clone();
+                            let draw = self.is_draw.clone();
+                            let mut winner = self.player1.clone();
+                            let w_id = self.winner.clone();
+                            if w_id == -1 {
+                                winner = self.player1.clone();
+                            }
+                            else if w_id == 1{
+                                winner = self.player2.clone();
+                            }
+                            else if w_id == 2{
+                                winner = "".to_string();
+                            }
+                            let diff = "N/A".to_string();
+                            let now = js_sys::Date::new_0();
+                            let date: String = now.to_iso_string().into();
+                            spawn_local(async move{
+                                let resp = req(p1, p2, draw, winner, diff, date).await;
+                                log::info!("body = {:#?}", resp);
+                            });
                         }
                         else if self.winner == 1 {
                             log::info!("h_map is {:#?}", self.game.clone().borrow().grid);
                             log::info!("player2 win");
                             winner_draw(self.game.clone(), self.winner);
+
+                            let p1 = self.player1.clone();
+                            let p2 = self.player2.clone();
+                            let draw = self.is_draw.clone();
+                            let mut winner = self.player1.clone();
+                            let w_id = self.winner.clone();
+                            if w_id == -1 {
+                                winner = self.player1.clone();
+                            }
+                            else if w_id == 1{
+                                winner = self.player2.clone();
+                            }
+                            else if w_id == 2{
+                                winner = "".to_string();
+                            }
+                            let diff = "N/A".to_string();
+                            let now = js_sys::Date::new_0();
+                            let date: String = now.to_iso_string().into();
+                            spawn_local(async move{
+                                let resp = req(p1, p2, draw, winner, diff, date).await;
+                                log::info!("body = {:#?}", resp);
+                            });
                         }
                         else if self.winner == 2{
                             self.is_draw = true;
                             winner_draw(self.game.clone(), self.winner);
+
+                            let p1 = self.player1.clone();
+                            let p2 = self.player2.clone();
+                            let draw = self.is_draw.clone();
+                            let mut winner = self.player1.clone();
+                            let w_id = self.winner.clone();
+                            if w_id == -1 {
+                                winner = self.player1.clone();
+                            }
+                            else if w_id == 1{
+                                winner = self.player2.clone();
+                            }
+                            else if w_id == 2{
+                                winner = "".to_string();
+                            }
+                            let diff = "N/A".to_string();
+                            let now = js_sys::Date::new_0();
+                            let date: String = now.to_iso_string().into();
+                            spawn_local(async move{
+                                let resp = req(p1, p2, draw, winner, diff, date).await;
+                                log::info!("body = {:#?}", resp);
+                            });
                         }
                     }
                 }
                 else {
-                    use chrono::Local;
-                    use instant::Instant;
+
                     let p1 = self.player1.clone();
                     let p2 = self.player2.clone();
                     let draw = self.is_draw.clone();
