@@ -151,7 +151,7 @@ fn test_draw(game: Rc<RefCell<TootAndOttoState>>, col: usize, TO: i32) {
 
 }
 
-fn winner_draw(game: Rc<RefCell<TootAndOttoState>>, winner: i32) {
+fn winner_draw(game: Rc<RefCell<TootAndOttoState>>, winner: i32, p1: &String, p2: &String) {
     let canvas: CanvasElement = document().query_selector("#background")
     .unwrap().unwrap().try_into().unwrap();
 
@@ -162,17 +162,19 @@ fn winner_draw(game: Rc<RefCell<TootAndOttoState>>, winner: i32) {
     context.begin_path();
 
     context.set_font("bold 25px serif");
-    let mut text = "Computer won, click to restart.";
+    
+    let mut text = "".to_string();
     if winner == -1 {
-        text = "Player 1 won, click to restart.";
+        text = format!("Player 1 {p1} won, click to restart.");
     }
     else if winner == 1 {
-        text = "Player 2 won, click to restart.";
+        text = format!("Player 2 {p2} won, click to restart.");
+
     }
     else if winner == 2 {
-        text = "Game is draw";
+        text = "Game is draw".to_string();
     }
-    context.fill_text(text, (75+100) as f64, (75) as f64, None);
+    context.fill_text(text.as_str(), (75+100) as f64, (75) as f64, None);
     context.restore();
 
 }
@@ -404,7 +406,7 @@ impl Component for TOOTHuman {
                         }
                         if self.winner == -1 {
                             log::info!("player1 win");
-                            winner_draw(self.game.clone(), self.winner);
+                            winner_draw(self.game.clone(), self.winner, &self.player1, &self.player2);
 
                             let p1 = self.player1.clone();
                             let p2 = self.player2.clone();
@@ -431,7 +433,7 @@ impl Component for TOOTHuman {
                         else if self.winner == 1 {
                             log::info!("h_map is {:#?}", self.game.clone().borrow().grid);
                             log::info!("player2 win");
-                            winner_draw(self.game.clone(), self.winner);
+                            winner_draw(self.game.clone(), self.winner, &self.player1, &self.player2);
 
                             let p1 = self.player1.clone();
                             let p2 = self.player2.clone();
@@ -457,7 +459,7 @@ impl Component for TOOTHuman {
                         }
                         else if self.winner == 2{
                             self.is_draw = true;
-                            winner_draw(self.game.clone(), self.winner);
+                            winner_draw(self.game.clone(), self.winner, &self.player1, &self.player2);
 
                             let p1 = self.player1.clone();
                             let p2 = self.player2.clone();

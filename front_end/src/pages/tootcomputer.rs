@@ -140,6 +140,7 @@ fn test_draw(game: Rc<RefCell<TootAndOttoState>>, col: usize, TO: i32) {
         context.fill_text(text, (75 * col + 100 -9) as f64, (75 * row + 50 + 8) as f64, None);
         context.restore();
         context.close_path();
+        
     }
 
 }
@@ -168,10 +169,7 @@ fn winner_draw(game: Rc<RefCell<TootAndOttoState>>, winner: i32) {
     }
     context.fill_text(text, (75+100) as f64, (75) as f64, None);
     context.restore();
-    
-
 }
-
 
 // for computer draw
 fn computer_draw(game: Rc<RefCell<TootAndOttoState>>, col: usize, TO: i32) {
@@ -731,7 +729,7 @@ impl Component for TOOTComputer {
             </div> 
             }}
             }
-            <canvas id="background" height="760" width="640"></canvas>
+            <canvas id="background" height="1000" width="1000"></canvas>
             </div>
         }
     }
