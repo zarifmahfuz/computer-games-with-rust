@@ -28,6 +28,8 @@ futures = "0.3.21"
 reqwasm = "0.2"
 # web-sys = "0.3.57"
 js-sys = "0.3.57"
+chrono = "0.4.19"
+instant = "0.1"
 
 [patch.crates-io]
 stdweb = { git = 'https://github.com/arturoc/stdweb.git' }
