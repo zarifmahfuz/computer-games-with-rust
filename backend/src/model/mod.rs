@@ -64,7 +64,7 @@ impl From<GameResult> for JsonGameResult {
 #[serde(crate = "rocket::serde")]
 pub struct Leaderboard {
     #[serde(rename = "winner_name")]
-    _id: i64,
+    _id: String,
     #[serde(default)]
     wins: i64,
 }

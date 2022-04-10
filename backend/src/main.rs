@@ -63,7 +63,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     // before Rocket can dispatch requests to a route, the route needs to be mounted
     rocket::build()
         .attach(database::init().await) // connect to the database
-        .mount("/", routes![create, list, delete, list_by_winner, list_top_players, list_top_players_by_difficulty])
+        .mount("/api", routes![create, list, delete, list_by_winner, list_top_players, list_top_players_by_difficulty])
         .launch()
         .await?;
     Ok(())
