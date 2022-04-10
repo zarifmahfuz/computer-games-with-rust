@@ -1,0 +1,21 @@
+Database Schema
+
+GameResults
+- game_number: String
+- game_type: String
+- p1_name: String
+- p2_name: String
+- is_draw: Boolean
+- winner_name: String
+- difficulty: String
+- game_date: DateTime
+
+
+cargo watch -x run
+
+Need to support -
+query by winner_name -> done
+
+/leaderboard
+query string should mention difficulty
+if query string is left empty, it will take all difficulties into account

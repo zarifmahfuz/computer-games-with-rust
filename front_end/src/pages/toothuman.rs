@@ -473,7 +473,6 @@ use serde::Serialize;
 use wasm_bindgen::closure::Closure;
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Branch {
-    pub _id: String,
     pub game_type: String,
     pub p1_name: String,
     pub p2_name: String,
@@ -488,7 +487,6 @@ async fn req(p1: String, p2: String, draw: bool, winner: String, difficulty: Str
     use reqwest::header::AUTHORIZATION;
     use reqwest::RequestBuilder;
 
-    let _id = "".to_string();
     let game_type = "TootAndOtto".to_string();
     let p1_name = p1;
     let p2_name = p2;
@@ -498,7 +496,6 @@ async fn req(p1: String, p2: String, draw: bool, winner: String, difficulty: Str
     let date_time = date_time;
 
     let data = JsValue::from_serde(&Branch {
-        _id,
         game_type,
         p1_name,
         p2_name,
