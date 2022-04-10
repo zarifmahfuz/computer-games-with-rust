@@ -6,7 +6,7 @@ use rocket::serde::{Serialize, Deserialize, json::Json};
 use rocket::response::{Debug, status::Created};
 use std::error::Error;
 use rocket::State;
-use crate::model::{GameResult, JsonGameResult, Leaderboard};
+use crate::model::{GameResult, JsonGameResult, Leaderboard, ComputerStatistics};
 use crate::utils::GenericError;
 
 #[post("/gameresults", format = "json", data = "<game_result>")]
@@ -58,12 +58,21 @@ async fn list_top_players_by_difficulty(difficulty: String, database: &State<dat
     }
 }
 
+#[get("/computer_stats")]
+async fn computer_stats(database: &State<database::MongoDB>) 
+    -> Result<Json<Vec<ComputerStatistics>>, GenericError> {
+    match database.get_comp_stats().await {
+        Ok(stats) => Ok(Json(stats)),
+        Err(error) => Err(GenericError::new(&*format!("{:?}", error)))
+    }
+}
+
 #[rocket::main]
 async fn main() -> Result<(), Box<dyn Error>> {
     // before Rocket can dispatch requests to a route, the route needs to be mounted
     rocket::build()
         .attach(database::init().await) // connect to the database
-        .mount("/api", routes![create, list, delete, list_by_winner, list_top_players, list_top_players_by_difficulty])
+        .mount("/api", routes![create, list, delete, list_by_winner, list_top_players, list_top_players_by_difficulty, computer_stats])
         .launch()
         .await?;
     Ok(())

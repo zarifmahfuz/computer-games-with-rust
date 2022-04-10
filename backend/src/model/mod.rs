@@ -68,3 +68,20 @@ pub struct Leaderboard {
     #[serde(default)]
     wins: i64,
 }
+
+#[derive(Debug, Clone, Deserialize, Serialize)]
+#[serde(crate = "rocket::serde")]
+pub struct ComputerStatistics {
+    #[serde(default)]
+    pub hard_played: u64,
+    #[serde(default)]
+    pub hard_won: u64,
+    #[serde(default)]
+    pub medium_played: u64,
+    #[serde(default)]
+    pub medium_won: u64,
+    #[serde(default)]
+    pub easy_played: u64,
+    #[serde(default)]
+    pub easy_won: u64,
+}

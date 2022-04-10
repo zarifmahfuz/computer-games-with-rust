@@ -4,7 +4,7 @@ use mongodb::options::{ClientOptions};
 use rocket::fairing::{AdHoc};
 use mongodb::results::{InsertOneResult};
 use rocket::futures::TryStreamExt;
-use crate::model::{GameResult, JsonGameResult, Leaderboard};
+use crate::model::{GameResult, JsonGameResult, Leaderboard, ComputerStatistics};
 
 #[derive(Debug)]
 pub struct MongoDB {
@@ -104,6 +104,63 @@ impl MongoDB {
             leaders.push(doc);
         }
         Ok(leaders)
+    }
+
+    pub async fn get_comp_stats(&self) -> mongodb::error::Result<Vec<ComputerStatistics>> {
+        let collection = self.database.collection::<GameResult>(self.game_results_col);
+        let hard_played = collection.count_documents(
+            doc! {
+                "p2_name": "Computer",
+                "difficulty": "Hard"
+            },
+            None
+        ).await?;
+        let hard_won = collection.count_documents(
+            doc! {
+                "p2_name": "Computer",
+                "difficulty": "Hard",
+                "winner_name": "Computer"
+            },
+            None
+        ).await?;
+        let medium_played = collection.count_documents(
+            doc! {
+                "p2_name": "Computer",
+                "difficulty": "Medium"
+            },
+            None
+        ).await?;
+        let medium_won = collection.count_documents(
+            doc! {
+                "p2_name": "Computer",
+                "difficulty": "Medium",
+                "winner_name": "Computer"
+            },
+            None
+        ).await?;
+        let easy_played = collection.count_documents(
+            doc! {
+                "p2_name": "Computer",
+                "difficulty": "Easy"
+            },
+            None
+        ).await?;
+        let easy_won = collection.count_documents(
+            doc! {
+                "p2_name": "Computer",
+                "difficulty": "Easy",
+                "winner_name": "Computer"
+            },
+            None
+        ).await?;
+        Ok(vec![ComputerStatistics {
+            hard_played,
+            hard_won,
+            medium_played,
+            medium_won,
+            easy_played,
+            easy_won,
+        }])
     }
 }
 
