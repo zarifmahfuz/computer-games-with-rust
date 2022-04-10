@@ -509,7 +509,7 @@ async fn req(p1: String, p2: String, draw: bool, winner: String, difficulty: Str
     })
     .unwrap();
     let request = web_sys::Request::new_with_str_and_init(
-        "/gameresults",
+        "/api/gameresults",
         web_sys::RequestInit::new()
             .body(Some(js_sys::JSON::stringify(&data).unwrap().as_ref()))
             .method("POST"),
