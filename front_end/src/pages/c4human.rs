@@ -1,24 +1,321 @@
-use yew::prelude::*;
+use my_2nd_yew_app::connect4::Connect4State;
 
-pub struct Connect4Human;
+use yew::prelude::*;
+use wasm_bindgen::JsCast;
+use std::convert::TryInto;
+
+pub struct Connect4Human {
+    game_started: bool,
+    player_1_name: String,
+    player_2_name: String,
+    board_size: (i32, i32),
+}
+
+pub enum Connect4HumanMsg {
+    Player1Name(Option<String>),
+    Player2Name(Option<String>),
+    StartGame,
+}
+
+#[derive(PartialEq, Debug, Clone)]
+struct Connect4Info {
+    game_started: bool,
+    player_1_name: String,
+    player_2_name: String,
+    board_size: (i32, i32),
+}
+
+#[derive(PartialEq, Debug, Clone)]
+struct GameBoard {
+    gameboard: Vec<Vec<i32>>,
+    controller: i32,
+    connect_obj: Connect4State,
+}
+
+#[derive(Properties, PartialEq)]
+struct ViewGameInfoProps {
+    game_info: Option<Connect4Info>
+}
+
+#[function_component(ViewGameInfo)]
+fn view_game(props: &ViewGameInfoProps) -> Html {
+
+    let game_info = match &props.game_info {
+        Some(p) => p,
+        None => return html!{},
+    };
+
+    // the game hasn't started yet
+    if !game_info.game_started {
+        web_sys::console::log_1(&"NO_STARTED".clone().into());
+        return html! {};
+    }
+    let game_info_callback = game_info.clone();
+    let board_col = game_info_callback.board_size.0.try_into().unwrap();
+    let board_row = game_info_callback.board_size.1.try_into().unwrap();
+
+    // used to track the game board status
+    let game_board_state = use_state_eq::<GameBoard,_>(|| 
+        GameBoard {
+            gameboard: vec![ vec![0; board_row]; board_col],
+            controller: 1, // indicates whose player's turn it is
+            connect_obj: Connect4State::new(board_row, board_col, 5, false, &game_info_callback.player_1_name, &game_info_callback.player_2_name)
+        });
+
+    let game_board_state_clone = game_board_state.clone();
+
+    // handle the clicking
+    let redraw = Callback::from(move |mouse_event: MouseEvent| {
+        web_sys::console::log_1(&mouse_event.clone().into());
+        let document = web_sys::window().unwrap().document().unwrap();
+        let canvas = document.get_element_by_id("gameboard").unwrap();
+
+        let canvas: web_sys::HtmlCanvasElement = canvas
+            .dyn_into::<web_sys::HtmlCanvasElement>()
+            .map_err(|_| ())
+            .unwrap();
+
+        let context = canvas
+            .get_context("2d")
+            .unwrap()
+            .unwrap()
+            .dyn_into::<web_sys::CanvasRenderingContext2d>()
+            .unwrap();
+
+
+        let rect = canvas.get_bounding_client_rect();
+        let x_coord = (mouse_event.client_x() as f64) - rect.left();
+        let y_coord = (mouse_event.client_y() as f64) - rect.top();
+
+        let mut board;
+        board = (*game_board_state).clone();
+
+        let winner = board.connect_obj.check_winner();
+
+        if winner != 0 {
+            document.location().unwrap().reload();
+            return;
+        }
+
+
+        let mut j = 0;
+        while j < board_col {
+
+            if ((x_coord - (75.0 * (j as f64) + 100.0))*(x_coord - (75.0 * (j as f64) + 100.0)) ) <=  (25.0 * 25.0) {
+                
+                web_sys::console::log_1(&"click valid".clone().into());
+
+                let mut valid_move = false;
+                let mut row = 0;
+                let mut i = 0;
+
+                while  i < board_row {
+                    if board.gameboard[j][i] == 0 {
+                        // it's empty, you can add circle here
+                        board.gameboard[j][i] = board.controller;
+
+                        web_sys::console::log_1(&(format!("the board: {:?} ", board)).clone().into());
+
+                        // keep this here to trigger the drawing
+                        context.begin_path();
+                        if board.controller == 1 {
+                            context.set_fill_style(&"#ff4136".into()); 
+                            board.connect_obj.player_1_move(j);
+                        }
+                        else {
+                            context.set_fill_style(&"#ffff00".into()); 
+                            board.connect_obj.player_2_move(j);
+                        }
+                        row = (i+board_row - 2*i)-1;
+                        context.arc(75.0 * (j as f64) + 100.0, 75.0 * (row as f64) + 50.0, 25.0, 0.0, std::f64::consts::PI * 2.0);
+                        context.fill();
+
+
+                        valid_move = true;
+                        break; // you added the piece, you are done
+                    }
+                    // that row is full, go to the next one
+                    i+=1
+                }
+
+                if valid_move {
+                    // toggle colour
+                    if board.controller == 1 {
+                        board.controller = 2;
+                    }
+                    else {
+                        board.controller = 1;
+                    }
+
+                    // handle the case where a winner is found
+                    let winner = board.connect_obj.check_winner();
+                    if winner != 0 {
+                        let mut win_text: String = "It's a draw".to_owned();
+                        if winner == 1 {
+                            win_text = format!("{} wins",game_info_callback.player_2_name.to_string());
+                        }
+                        else if winner == -1 {
+                            win_text = format!("{} wins",game_info_callback.player_1_name.to_string());
+                        }
+
+                        // show a winning message
+                        win_text += " - Click on game board to reset";
+
+                        context.set_font("14pt sans-serif");
+                        context.set_fill_style(&"#111".into());
+                        context.fill_text(&win_text, 130.0, 20.0);
+                    }
+                }
+                game_board_state.set(board); // save current board state
+
+                break;
+            }
+            j+=1;
+        }
+
+    });
+
+    // draw the board
+    use_effect(move || {
+        // Make a call to DOM API after component is rendered
+        web_sys::console::log_1(&"update".clone().into());
+        let document = web_sys::window().unwrap().document().unwrap();//.document().unwrap();
+        let canvas = document.get_element_by_id("gameboard").unwrap();
+
+        let canvas: web_sys::HtmlCanvasElement = canvas
+            .dyn_into::<web_sys::HtmlCanvasElement>()
+            .map_err(|_| ())
+            .unwrap();
+
+        let context = canvas
+            .get_context("2d")
+            .unwrap()
+            .unwrap()
+            .dyn_into::<web_sys::CanvasRenderingContext2d>()
+            .unwrap();
+
+        // ensure board is only redrawn when the game is new
+        let move_tracker = (*game_board_state_clone).gameboard.iter().map(|vec| vec.iter().sum::<i32>()).sum::<i32>();
+        if move_tracker == 0 {
+
+            // draw the board
+            context.begin_path();
+            let mut y = 0;
+            let mut x = 0;
+            context.set_fill_style(&"#00bfff".into()); 
+            while y <board_row {
+                x = 0;
+                while x < board_col {
+                    context.arc(75.0 * (x as f64) + 100.0, 75.0 * (y as f64) + 50.0, 25.0, 0.0, std::f64::consts::PI * 2.0).unwrap();
+                    context.rect(75.0 * (x as f64) + 150.0, 75.0 * (y as f64), -100.0, 100.0);
+                    x+=1;
+                }
+                y+=1;
+            }
+            context.fill();
+        }
+        // Perform the cleanup
+        || web_sys::console::log_1(&"cleanup".clone().into())
+    });
+
+
+    html!{
+        <div>
+
+            <div class="post" ng-repeat="game in games">
+                <br/>
+                    <h4>{format!("New Game: {} Vs {}", game_info.player_1_name,game_info.player_2_name )}</h4>
+                    <small> {format!("Disc Colors: {} - ", game_info.player_1_name)} </small>
+                    <small> <strong> {"Red"} </strong> </small>
+                    <small>{format!(" and {} - ", game_info.player_2_name)}</small>
+                    <small> <b>{"Yellow"}</b></small>
+                <br/>
+            </div>
+
+            <canvas id="gameboard" height={format!("{}", board_row*80)} width={format!("{}", board_col*90)} onclick = {redraw} ></canvas>
+        </div>
+    }
+}
+
+
+#[derive(Properties, PartialEq)]
+pub struct GameProps {
+    #[prop_or_default]
+    pub children: Children,
+}
 
 impl Component for Connect4Human {
-    type Message = ();
-    type Properties = ();
+    type Message = Connect4HumanMsg;
+    type Properties = GameProps;
 
     fn create(_ctx: &Context<Self>) -> Self {
-        Self
+        Self {
+            game_started: false,
+            player_1_name: String::from(""),
+            player_2_name: String::from(""),
+            board_size: (6,7),
+        }
     }
 
-    fn update(&mut self, _ctx: &Context<Self>, _msg: Self::Message) -> bool {
-        unimplemented!()
+    fn update(&mut self, _ctx: &Context<Self>, msg: Self::Message) -> bool {
+        match msg {
+            Connect4HumanMsg::Player1Name(name) => {
+                // web_sys::console::log_1(&name.clone().into());
+                match name {
+                    Some(n) => self.player_1_name += &n,
+                    None => { self.player_1_name.pop(); }
+                }
+            },
+            Connect4HumanMsg::Player2Name(name) => {
+                // web_sys::console::log_1(&name.clone().into());
+                match name {
+                    Some(n) => self.player_2_name += &n,
+                    None => { self.player_2_name.pop(); }
+                }
+            },
+            Connect4HumanMsg::StartGame => {
+                self.game_started = true;
+
+                let document = web_sys::window().unwrap().document().unwrap();
+
+                // get the selected board size
+                let selector = document.query_selector("#size_selector")
+                    .unwrap()
+                    .unwrap()
+                    .dyn_into::<web_sys::HtmlSelectElement>()
+                    .unwrap();
+                let val = selector.value();
+
+                // store the selected board size
+                match val.as_str() {
+                    "7x6" => self.board_size = (7,6),
+                    "6x4" => self.board_size = (6,4),
+                    "8x8" => self.board_size = (8,8),
+                    _ => println!("something else!"),
+                }
+                // web_sys::console::log_2(&self.board_size.clone().0.into(), &self.board_size.clone().1.into());
+            },
+        }
+        true
     }
 
     fn changed(&mut self, _ctx: &Context<Self>) -> bool {
         unimplemented!()
     }
 
-    fn view(&self, _ctx: &Context<Self>) -> Html {
+    fn view(&self, ctx: &Context<Self>) -> Html {
+
+        let oninput1 = ctx.link().callback(|e: InputEvent| Connect4HumanMsg::Player1Name(e.data()));
+        let oninput2 = ctx.link().callback(|e: InputEvent| Connect4HumanMsg::Player2Name(e.data()));
+        let onclick = ctx.link().callback(|_| Connect4HumanMsg::StartGame);
+
+        let game_info = Connect4Info {
+            game_started: self.game_started.clone(),
+            player_1_name: self.player_1_name.clone(),
+            player_2_name: self.player_2_name.clone(),
+            board_size: self.board_size.clone(),
+        };
+
         html! {
             <div id="main" style="margin-left:30%">
             <div class="w3-container" id="services" style="margin-top:75px">
@@ -27,23 +324,23 @@ impl Component for Connect4Human {
             </div>
 
             <div class="col-md-offset-4 col-md-8">
-                <form  ng-submit="Game()">
-                    <div class="col-md-offset-3 col-md-8">
-                        <input id="textbox1" type="text" placeholder="Player 1's Name" ng-model="newGame.Player1Name"/>
-                        <input id="textbox2" type="text" placeholder="Player 2's Name" ng-model="newGame.Player2Name"/>
-                        <input id="startbutton" class="button" type="submit" value="Start Game"/>
-                    </div>
-                </form>
-
-                <div class="post" ng-repeat="game in games">
-                    <br/>
-                    <h4>{"New Game:  {{game.Player1Name}} Vs {{game.Player2Name}}"}</h4>
-                    <small>{"(Disc Colors: {{game.Player1Name}} - <b>Red</b>    and    {{game.Player2Name}} - <b>Yellow</b>)"}</small>
-                    <br/>
-                </div>
-
-                <canvas id="gameboard" height="480" width="640"></canvas>
+                <input id="textbox1" type="text" placeholder="Player 1's Name" oninput = {oninput1}/>
+                <input id="textbox2" type="text" placeholder="Player 2's Name" oninput = {oninput2}/>
+                <input id="startbutton" class="button" type="submit" {onclick} /> //value="Start Game"
             </div>
+
+            <div>
+                <label for="size_selector"> {"Choose a board size:"} </label>
+                <select id="size_selector" style="margin: 5px" >
+                    <option selected=true disabled=false value={"7x6"}>{"7x6"}</option>
+                    <option selected=false disabled=false value="6x4">{"6x4"}</option>
+                    <option selected=false disabled=false value="8x8">{"8x8"}</option>
+                </select>
+            </div>
+
+                <div>
+                    <ViewGameInfo game_info = {Some(game_info)} />
+                </div>
             </div>
         }
     }
