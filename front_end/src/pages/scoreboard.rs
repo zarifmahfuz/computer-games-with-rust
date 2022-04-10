@@ -1,6 +1,7 @@
 use yew::prelude::*;
 use serde::Deserialize;
 use reqwasm::http::Request;
+use chrono::{DateTime};
 
 #[derive(Clone, PartialEq, Deserialize)]
 struct GameResult {
@@ -21,19 +22,23 @@ struct GameResultsProps {
 
 #[function_component(GameResults)]
 fn game_results(GameResultsProps { game_results }: &GameResultsProps) -> Html {
-    game_results.iter().map(|game_result| html! {
-        <tr>
-        <td>{ format!("{}", game_result._id) }</td>
-        <td>{ format!("{}", game_result.game_type) }</td>
-        <td>{ format!("{}", game_result.p1_name) }</td>
-        <td>{ format!("{}", game_result.p2_name) }</td>
-        if !game_result.is_draw {
-            <td>{ format!("{}", game_result.winner_name) }</td>
-        } else {
-            <td>{ "Draw" }</td>
+    game_results.iter().map(|game_result| {
+        let dt = DateTime::parse_from_rfc3339(game_result.date_time.as_str()).unwrap();
+        html! {
+            <tr>
+            <td>{ format!("{}", game_result._id) }</td>
+            <td>{ format!("{}", game_result.game_type) }</td>
+            <td>{ format!("{}", game_result.p1_name) }</td>
+            <td>{ format!("{}", game_result.p2_name) }</td>
+            
+            if !game_result.is_draw {
+                <td>{ format!("{}", game_result.winner_name) }</td>
+            } else {
+                <td>{ "Draw" }</td>
+            }
+            <td>{ format!("{}", dt) }</td>
+            </tr>
         }
-        <td>{ format!("{}", game_result.date_time) }</td>
-        </tr>
     }).collect()
 }
 
@@ -59,7 +64,7 @@ fn game_history() -> Html {
     }
     html! {
         <>
-            <div class="w3-container" id="services" style="margin-top:75px; margin-left: 25%">
+            <div class="w3-container" id="services" style="margin-top:75px; margin-left: 30%">
                 <h5 class="w3-xxxlarge w3-text-red"><b>{"Game History"}</b></h5>
                 <hr style="width:50px;border:5px solid red" class="w3-round"/>
 

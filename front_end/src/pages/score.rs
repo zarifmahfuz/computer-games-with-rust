@@ -1,6 +1,7 @@
 use yew::prelude::*;
 use serde::Deserialize;
 use reqwasm::http::Request;
+use chrono::{DateTime};
 
 #[derive(Clone, PartialEq, Deserialize)]
 struct GameResult {
@@ -27,14 +28,17 @@ struct GameResultsProps {
 
 #[function_component(GameResults)]
 fn game_results(GameResultsProps { game_results }: &GameResultsProps) -> Html {
-    game_results.iter().enumerate().map(|(sl, game_result)| html! {
-        <tr>
-        <td>{ format!("{}", sl + 1) }</td>
-        <td>{ format!("{}", game_result.game_type) }</td>
-        <td>{ format!("{}", game_result.winner_name) }</td>
-        <td>{ format!("{}", game_result.p1_name) }</td>
-        <td>{ format!("{}", game_result.date_time) }</td>
-        </tr>
+    game_results.iter().enumerate().map(|(sl, game_result)| {
+        let dt = DateTime::parse_from_rfc3339(game_result.date_time.as_str()).unwrap();
+        html! {
+            <tr>
+            <td>{ format!("{}", sl + 1) }</td>
+            <td>{ format!("{}", game_result.game_type) }</td>
+            <td>{ format!("{}", game_result.winner_name) }</td>
+            <td>{ format!("{}", game_result.p1_name) }</td>
+            <td>{ format!("{}", dt) }</td>
+            </tr>
+        }
     }).collect()
 }
 
