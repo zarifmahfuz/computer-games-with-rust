@@ -23,13 +23,13 @@ curl -i -X DELETE http://127.0.0.1:5000/api/gameresults
 
 curl -i -X GET "http://127.0.0.1:5000/api/gameresults?winner_name=Computer"
 
-curl -X POST -H "Content-Type: application/json" http://127.0.0.1:5000/gameresults -d '{
+curl -X POST -H "Content-Type: application/json" http://127.0.0.1:5000/api/gameresults -d '{
     "game_type": "TootAndOtto",
-    "p1_name": "Zarif",
+    "p1_name": "John",
     "p2_name": "Computer",
     "is_draw": false,
     "winner_name": "Computer",
-    "difficulty": "Medium",
+    "difficulty": "Easy",
     "date_time": "2022-04-09T15:00:00.00Z"
 }'
 
