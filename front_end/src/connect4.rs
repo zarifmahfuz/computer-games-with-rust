@@ -443,7 +443,7 @@ fn minimax(st: &mut Connect4State, height: i32, mut alpha: i32, mut beta: i32) -
         let max_value = st.max_value();
         if max_value == st.min {
             // terminal state: min wins in the current game state
-            return (score, -1);
+            return (score / st.moves_made, -1);
         }
         for j in 0..st.cols {
             // if this column is full, skip
@@ -472,7 +472,7 @@ fn minimax(st: &mut Connect4State, height: i32, mut alpha: i32, mut beta: i32) -
         let max_value = st.max_value();
         if max_value == st.max {
             // terminal state: max wins in the current game state
-            return (score, -1);
+            return (score / st.moves_made, -1);
         }
         for j in 0..st.cols {
             // if this column is full, skip
