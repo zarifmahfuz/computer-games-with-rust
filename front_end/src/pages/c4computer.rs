@@ -389,6 +389,15 @@ impl Component for Connect4Computer {
                     "8x8" => self.board_size = (8,8),
                     _ => println!("something else!"),
                 }
+
+                // get the selected difficulty
+                let diff_selector = document.query_selector("#diff_selector")
+                    .unwrap()
+                    .unwrap()
+                    .dyn_into::<web_sys::HtmlSelectElement>()
+                    .unwrap();
+                self.difficulty = diff_selector.value().parse::<i32>().unwrap();
+
             },
         }
         true
