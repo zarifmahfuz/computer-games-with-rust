@@ -2,8 +2,8 @@
 mod database;
 mod model;
 mod utils;
-use rocket::serde::{Serialize, Deserialize, json::Json};
-use rocket::response::{Debug, status::Created};
+use rocket::serde::{json::Json};
+use rocket::response::{status::Created};
 use std::error::Error;
 use rocket::State;
 use crate::model::{GameResult, JsonGameResult, Leaderboard, ComputerStatistics};

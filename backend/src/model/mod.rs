@@ -1,4 +1,4 @@
-use rocket::serde::{Serialize, Deserialize, self};
+use rocket::serde::{Serialize, Deserialize};
 use mongodb::bson::{DateTime};
 use mongodb::bson::serde_helpers::bson_datetime_as_rfc3339_string;
 

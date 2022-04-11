@@ -1,5 +1,5 @@
 use mongodb::{bson, Client, Cursor, Database, options::FindOptions};
-use mongodb::bson::{doc, Document, DateTime};
+use mongodb::bson::{doc};
 use mongodb::options::{ClientOptions};
 use rocket::fairing::{AdHoc};
 use mongodb::results::{InsertOneResult};
