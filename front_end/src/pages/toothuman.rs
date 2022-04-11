@@ -1,4 +1,3 @@
-use requests::request;
 use games::toot::TootAndOttoState;
 use yew::prelude::*;
 use std::cell::RefCell;
@@ -13,7 +12,6 @@ use std::collections::HashMap;
 
 use serde::Deserialize;
 use serde_json::json;
-use reqwest::Client;
 
 use wasm_bindgen_futures::spawn_local;
 
@@ -21,6 +19,8 @@ use web_sys::{Request, RequestInit, RequestMode, Response};
 use wasm_bindgen_futures::JsFuture;
 use wasm_bindgen::JsCast;
 use wasm_bindgen::JsValue;
+
+use instant::Instant;
 
 // https://stackoverflow.com/questions/57547849/rust-adding-event-listeners-to-a-webassembly-game
 // This reference teach you how to implement this macro rulle and how to add listener to a canvas.
@@ -32,7 +32,9 @@ macro_rules! enclose {
         }
     };
 }
-
+// Please note, some of those callbacks are defined 
+// at the start stage of the implementation and 
+// in the later stage, they are discarded.
 pub struct TOOTHuman {
     player1: String,
     player2: String,
@@ -41,9 +43,9 @@ pub struct TOOTHuman {
     // used to update name
     name_callback1: Callback<InputEvent>,
     name_callback2: Callback<InputEvent>,
-    // used to update diff
+    // dead callback
     diff_callback: Callback<InputEvent>,
-    // used to change T or O
+    // dead callback
     TO_callback: Callback<InputEvent>,
     // used to start the game
     start_callback: Callback<MouseEvent>,
@@ -129,6 +131,7 @@ fn test_draw(game: Rc<RefCell<TootAndOttoState>>, col: usize, TO: i32) {
             false,
         );
         context.fill(FillRule::NonZero);
+        // context.set_font("bold 25px serif");
     
         context.restore();
         let mut text = "T";
@@ -146,7 +149,7 @@ fn test_draw(game: Rc<RefCell<TootAndOttoState>>, col: usize, TO: i32) {
 
 }
 
-fn winner_draw(game: Rc<RefCell<TootAndOttoState>>, winner: i32) {
+fn winner_draw(game: Rc<RefCell<TootAndOttoState>>, winner: i32, p1: &String, p2: &String) {
     let canvas: CanvasElement = document().query_selector("#background")
     .unwrap().unwrap().try_into().unwrap();
 
@@ -157,17 +160,19 @@ fn winner_draw(game: Rc<RefCell<TootAndOttoState>>, winner: i32) {
     context.begin_path();
 
     context.set_font("bold 25px serif");
-    let mut text = "Computer won, click to restart.";
+
+    let mut text = "".to_string();
     if winner == -1 {
-        text = "Player 1 won, click to restart.";
+        text = format!("Player 1 {p1} won, click to restart.");
     }
     else if winner == 1 {
-        text = "Player 2 won, click to restart.";
+        text = format!("Player 2 {p2} won, click to restart.");
+
     }
     else if winner == 2 {
-        text = "Game is draw";
+        text = "Game is draw".to_string();
     }
-    context.fill_text(text, (75+100) as f64, (75) as f64, None);
+    context.fill_text(text.as_str(), (75+100) as f64, (75) as f64, None);
     context.restore();
 
 }
@@ -270,17 +275,35 @@ impl Component for TOOTHuman {
         match _msg {
         
             Msg::setPlayerName1(val) => {
+
                 let mut owned = self.player1.to_owned();
-                let another_owned =  val.data().unwrap().to_owned();
-                owned.push_str(&another_owned);
-                self.player1 = owned;
+                if val.data().is_some() {
+                    let another_owned =  val.data().unwrap().to_owned();
+                    owned.push_str(&another_owned);
+                    self.player1 = owned;
+                }
+                else {
+                    let mut chars = self.player1.chars();
+                    chars.next_back();
+                    chars.as_str();
+                    self.player1 = chars.as_str().to_string();
+                }
             }
 
             Msg::setPlayerName2(val) => {
+
                 let mut owned = self.player2.to_owned();
-                let another_owned =  val.data().unwrap().to_owned();
-                owned.push_str(&another_owned);
-                self.player2 = owned;
+                if val.data().is_some() {
+                    let another_owned =  val.data().unwrap().to_owned();
+                    owned.push_str(&another_owned);
+                    self.player2 = owned;
+                }
+                else {
+                    let mut chars = self.player2.chars();
+                    chars.next_back();
+                    chars.as_str();
+                    self.player2 = chars.as_str().to_string();
+                }
             }
 
             Msg::setDifficulty(val) => {self.difficulty = 1;}
@@ -381,45 +404,87 @@ impl Component for TOOTHuman {
                         }
                         if self.winner == -1 {
                             log::info!("player1 win");
-                            winner_draw(self.game.clone(), self.winner);
+                            winner_draw(self.game.clone(), self.winner, &self.player1, &self.player2);
+
+                            let p1 = self.player1.clone();
+                            let p2 = self.player2.clone();
+                            let draw = self.is_draw.clone();
+                            let mut winner = self.player1.clone();
+                            let w_id = self.winner.clone();
+                            if w_id == -1 {
+                                winner = self.player1.clone();
+                            }
+                            else if w_id == 1{
+                                winner = self.player2.clone();
+                            }
+                            else if w_id == 2{
+                                winner = "".to_string();
+                            }
+                            let diff = "N/A".to_string();
+                            let now = js_sys::Date::new_0();
+                            let date: String = now.to_iso_string().into();
+                            spawn_local(async move{
+                                let resp = req(p1, p2, draw, winner, diff, date).await;
+                                log::info!("body = {:#?}", resp);
+                            });
                         }
                         else if self.winner == 1 {
                             log::info!("h_map is {:#?}", self.game.clone().borrow().grid);
                             log::info!("player2 win");
-                            winner_draw(self.game.clone(), self.winner);
+                            winner_draw(self.game.clone(), self.winner, &self.player1, &self.player2);
+
+                            let p1 = self.player1.clone();
+                            let p2 = self.player2.clone();
+                            let draw = self.is_draw.clone();
+                            let mut winner = self.player1.clone();
+                            let w_id = self.winner.clone();
+                            if w_id == -1 {
+                                winner = self.player1.clone();
+                            }
+                            else if w_id == 1{
+                                winner = self.player2.clone();
+                            }
+                            else if w_id == 2{
+                                winner = "".to_string();
+                            }
+                            let diff = "N/A".to_string();
+                            let now = js_sys::Date::new_0();
+                            let date: String = now.to_iso_string().into();
+                            spawn_local(async move{
+                                let resp = req(p1, p2, draw, winner, diff, date).await;
+                                log::info!("body = {:#?}", resp);
+                            });
                         }
+
                         else if self.winner == 2{
                             self.is_draw = true;
-                            winner_draw(self.game.clone(), self.winner);
+                            winner_draw(self.game.clone(), self.winner, &self.player1, &self.player2);
+
+                            let p1 = self.player1.clone();
+                            let p2 = self.player2.clone();
+                            let draw = self.is_draw.clone();
+                            let mut winner = self.player1.clone();
+                            let w_id = self.winner.clone();
+                            if w_id == -1 {
+                                winner = self.player1.clone();
+                            }
+                            else if w_id == 1{
+                                winner = self.player2.clone();
+                            }
+                            else if w_id == 2{
+                                winner = "".to_string();
+                            }
+                            let diff = "N/A".to_string();
+                            let now = js_sys::Date::new_0();
+                            let date: String = now.to_iso_string().into();
+                            spawn_local(async move{
+                                let resp = req(p1, p2, draw, winner, diff, date).await;
+                                log::info!("body = {:#?}", resp);
+                            });
                         }
                     }
                 }
                 else {
-                    use chrono::Local;
-                    use instant::Instant;
-                    let p1 = self.player1.clone();
-                    let p2 = self.player2.clone();
-                    let draw = self.is_draw.clone();
-                    let mut winner = self.player1.clone();
-                    let w_id = self.winner.clone();
-                    if w_id == -1 {
-                        winner = self.player1.clone();
-                    }
-                    else if w_id == 1{
-                        winner = self.player2.clone();
-                    }
-                    else if w_id == 2{
-                        winner = "".to_string();
-                    }
-                    let diff = "N/A".to_string();
-                    let now = js_sys::Date::new_0();
-                    let date: String = now.to_iso_string().into();
-                    spawn_local(async move{
-                        let resp = req(p1, p2, draw, winner, diff, date).await;
-                        log::info!("body = {:#?}", resp);
-                    });
-
-
 
                     self.game = Rc::new(RefCell::new(TootAndOttoState::new(self.row, self.col, self.difficulty, false, &self.player1, &self.player2)));
                     let canvas: CanvasElement = document()
@@ -489,7 +554,7 @@ impl Component for TOOTHuman {
             </div> 
             }}
             }
-            <canvas id="background" height="760" width="640"></canvas>
+            <canvas id="background" height="1000" width="1000"></canvas>
             </div>
         }
     }
@@ -507,10 +572,6 @@ pub struct Branch {
     pub date_time: String,
 }
 async fn req(p1: String, p2: String, draw: bool, winner: String, difficulty: String, date_time: String){
-    use reqwest::header::CONTENT_TYPE;
-    use reqwest::header::ACCEPT;
-    use reqwest::header::AUTHORIZATION;
-    use reqwest::RequestBuilder;
 
     let game_type = "TootAndOtto".to_string();
     let p1_name = p1;
