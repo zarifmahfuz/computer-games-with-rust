@@ -149,10 +149,6 @@ impl TootAndOttoState {
     // TOOT: 1,-1,-1,1; OTTO: -1,1,1,-1
     // MIN plays for TOOT and MAX plays for OTTO
     fn max_value(&self) -> i32 {
-        if self.moves_made as usize >= self.size {
-            return 2;
-        }
-
         let mut right = [0; 4];
         let mut bottom = [0; 4];
         let mut bottom_right = [0; 4];
@@ -226,6 +222,10 @@ impl TootAndOttoState {
             }
         }
         if max_wins == 0 && min_wins == 0 {
+            if self.moves_made as usize >= self.size {
+                // draw
+                return 2;
+            }
             // no winner
             return 0;
         } else if max_wins > min_wins {

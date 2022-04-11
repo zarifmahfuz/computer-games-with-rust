@@ -100,9 +100,6 @@ impl Connect4State {
 
     // returns MAX if MAX won, MIN if MIN won, 0 if game is still running and 2 if game is a draw
     fn max_value(&self) -> i32 {
-        if self.moves_made as usize >= self.size {
-            return 2;
-        }
         let mut horiz_right_score: i32;
         let mut vert_down_score: i32;
         let mut diag_bottom_right_score: i32;
@@ -159,6 +156,10 @@ impl Connect4State {
                     return self.min;
                 }
             }
+        }
+        if self.moves_made as usize >= self.size {
+            // draw
+            return 2;
         }
         // no winner
         return 0;
