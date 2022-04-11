@@ -4,6 +4,11 @@ use yew::prelude::*;
 use wasm_bindgen::JsCast;
 use std::convert::TryInto;
 
+use serde::Deserialize;
+use serde::Serialize;
+
+use wasm_bindgen::JsValue;
+
 pub struct Connect4Human {
     game_started: bool,
     player_1_name: String,
@@ -15,6 +20,17 @@ pub enum Connect4HumanMsg {
     Player1Name(Option<String>),
     Player2Name(Option<String>),
     StartGame,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+struct PostWinnerReq {
+    game_type: String,
+    p1_name: String,
+    p2_name: String,
+    is_draw: bool,
+    winner_name: String,
+    difficulty: String,
+    date_time: String,
 }
 
 #[derive(PartialEq, Debug, Clone)]
@@ -63,6 +79,84 @@ fn view_game(props: &ViewGameInfoProps) -> Html {
         });
 
     let game_board_state_clone = game_board_state.clone();
+
+    let handle_game_end_cond =  move |board: GameBoard| -> bool {
+        let winner = board.connect_obj.check_winner();
+        if winner != 0 {
+            let mut win_text: String = "It's a draw".to_owned();
+            let mut winner_name = game_info_callback.player_1_name.to_string();
+            if winner == 1 {
+                win_text = format!("{} wins",game_info_callback.player_2_name.to_string());
+                winner_name = game_info_callback.player_2_name.to_string();
+            }
+            else if winner == -1 {
+                win_text = format!("{} wins",game_info_callback.player_1_name.to_string());
+            }
+
+            // show a winning message
+            win_text += " - Click on game board to reset";
+
+            let document = web_sys::window().unwrap().document().unwrap();
+            let canvas = document.get_element_by_id("gameboard").unwrap();
+
+            let canvas: web_sys::HtmlCanvasElement = canvas
+                .dyn_into::<web_sys::HtmlCanvasElement>()
+                .map_err(|_| ())
+                .unwrap();
+
+            let cntx = canvas
+                .get_context("2d")
+                .unwrap()
+                .unwrap()
+                .dyn_into::<web_sys::CanvasRenderingContext2d>()
+                .unwrap();
+
+            cntx.set_font("14pt sans-serif");
+            cntx.set_fill_style(&"#111".into());
+            cntx.fill_text(&win_text, 130.0, 20.0);
+
+            let game_info_clone = game_info_callback.clone();
+            // post request here
+            wasm_bindgen_futures::spawn_local(async move {
+
+                let now = js_sys::Date::new_0();
+                let date: String = now.to_iso_string().into();
+
+                let body = JsValue::from_serde(
+                    &PostWinnerReq {
+                        game_type: "Connect-4".to_string(),
+                        p1_name: game_info_clone.player_1_name,
+                        p2_name: game_info_clone.player_2_name,
+                        is_draw: (winner == 2),
+                        winner_name: winner_name,
+                        difficulty: "N/A".to_string(),
+                        date_time: date,
+                    }
+                ).unwrap();
+
+                let request = web_sys::Request::new_with_str_and_init(
+                    "/api/gameresults",
+                    web_sys::RequestInit::new()
+                        .body(Some(js_sys::JSON::stringify(&body)
+                        .unwrap()
+                        .as_ref()))
+                        .method("POST"),
+                ).unwrap();
+
+                request.headers()
+                    .set("Content-Type", "application/json").unwrap();
+                    
+                let window = web_sys::window().unwrap();
+                window.fetch_with_request(&request);
+            });
+
+            return true;
+        }
+        else {
+            return false;
+        }
+    };
+
 
     // handle the clicking
     let redraw = Callback::from(move |mouse_event: MouseEvent| {
@@ -148,23 +242,8 @@ fn view_game(props: &ViewGameInfoProps) -> Html {
                     }
 
                     // handle the case where a winner is found
-                    let winner = board.connect_obj.check_winner();
-                    if winner != 0 {
-                        let mut win_text: String = "It's a draw".to_owned();
-                        if winner == 1 {
-                            win_text = format!("{} wins",game_info_callback.player_2_name.to_string());
-                        }
-                        else if winner == -1 {
-                            win_text = format!("{} wins",game_info_callback.player_1_name.to_string());
-                        }
-
-                        // show a winning message
-                        win_text += " - Click on game board to reset";
-
-                        context.set_font("14pt sans-serif");
-                        context.set_fill_style(&"#111".into());
-                        context.fill_text(&win_text, 130.0, 20.0);
-                    }
+                    handle_game_end_cond(board.clone());
+                    
                 }
                 game_board_state.set(board); // save current board state
 
