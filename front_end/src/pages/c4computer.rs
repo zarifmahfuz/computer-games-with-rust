@@ -124,7 +124,7 @@ fn view_game(props: &ViewGameInfoProps) -> Html {
                 let diff = match game_info_clone.difficulty {
                     1 => "Easy".to_string(),
                     2 => "Medium".to_string(),
-                    5 => "Hard".to_string(),
+                    4 => "Hard".to_string(),
                     _ => "Error".to_string(),
                 };
 
@@ -444,7 +444,7 @@ impl Component for Connect4Computer {
                 <select id="diff_selector" style="margin: 5px" >
                     <option selected=true disabled=false value=1> {"Easy"}</option>
                     <option selected=false disabled=false value=2> {"Medium"}</option>
-                    <option selected=false disabled=false value=5> {"Hard"}</option>
+                    <option selected=false disabled=false value=4> {"Hard"}</option>
                 </select>
             </div>
 
